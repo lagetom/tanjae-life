@@ -5,6 +5,6 @@ export const SEOLDAM_ASSETS = {
   notes: {
     calm: '/src/assets/images/seoldam_reaper_slim_calm_1795740530242.jpg',
     keen: '/src/assets/images/seoldam_reaper_slim_keen_1795740530381.jpg',
-    warm: '/src/assets/images/seoldam_reaper_slim_warm_1795740531393.jpg',
+    warm: '/src/assets/images/seoldam_reaper_loaf_warm_1795782809775.jpg',
   } satisfies Record<SeoldamMood, string>,
 } as const;

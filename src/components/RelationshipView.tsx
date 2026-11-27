@@ -1840,7 +1840,7 @@ export function RelationshipView({
                   <div className="w-16 h-16 md:w-20 md:h-20 bg-white overflow-hidden shrink-0">
                     <SeoldamImage
                       src={SEOLDAM_ASSETS.notes.warm}
-                      alt="부채를 든 저승차사 고양이 재(災)"
+                      alt="식빵 자세로 앉아 있는 저승차사 고양이 재(災)"
                       className="w-full h-full object-contain"
                       fallbackTitle="재(災)"
                     />

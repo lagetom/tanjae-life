@@ -44,7 +44,7 @@ export function BokchaeModal({ open, onClose }: BokchaeModalProps) {
             <div className="w-11 h-11 shrink-0 overflow-hidden bg-[#FAFAFA] p-1">
               <SeoldamImage
                 src={SEOLDAM_ASSETS.notes.warm}
-                alt="부채를 든 저승차사 고양이 재(災)"
+                alt="식빵 자세로 앉아 있는 저승차사 고양이 재(災)"
                 className="w-full h-full object-contain"
                 fallbackTitle="재(災)"
               />
