@@ -23,6 +23,7 @@ import type {
   PairCompatibility,
   RelationMember,
 } from '../types/saju';
+import { computeEdgeLabelPositions } from '../utils/graphLabelLayout';
 
 export type RelationShareCardId = 'pair' | 'group';
 
@@ -85,10 +86,23 @@ function StaticGroupGraphSvg({
   const height = 470;
   const cx = width / 2;
   const cy = height / 2;
-  const radius = members.length === 2 ? 195 : members.length <= 4 ? 158 : 172;
-  const nodeRadius = members.length <= 4 ? 54 : members.length <= 6 ? 48 : 42;
+  const radius =
+    members.length === 2
+      ? 195
+      : members.length <= 4
+        ? 158
+        : members.length <= 5
+          ? 174
+          : 182;
+  const nodeRadius =
+    members.length <= 4 ? 54 : members.length <= 5 ? 46 : members.length <= 6 ? 40 : 34;
+  const labelW = members.length <= 5 ? 66 : members.length === 6 ? 56 : 48;
+  const labelH = members.length <= 5 ? 28 : members.length === 6 ? 24 : 20;
+  const labelFontSize = members.length <= 5 ? 14 : members.length === 6 ? 12.5 : 11;
 
   const positions = new Map<string, { x: number; y: number }>();
+  const indexById = new Map<string, number>();
+  const nodePositions: { x: number; y: number }[] = [];
   members.forEach((m, idx) => {
     const angle =
       members.length === 2
@@ -96,10 +110,35 @@ function StaticGroupGraphSvg({
           ? Math.PI
           : 0
         : -Math.PI / 2 + (idx * 2 * Math.PI) / members.length;
-    positions.set(m.id, {
+    const pt = {
       x: cx + Math.cos(angle) * radius,
       y: cy + Math.sin(angle) * radius,
-    });
+    };
+    positions.set(m.id, pt);
+    indexById.set(m.id, idx);
+    nodePositions.push(pt);
+  });
+
+  const edgeInputs = pairs
+    .map((pair) => {
+      const pA = positions.get(pair.a.id);
+      const pB = positions.get(pair.b.id);
+      const aIndex = indexById.get(pair.a.id);
+      const bIndex = indexById.get(pair.b.id);
+      if (!pA || !pB || aIndex === undefined || bIndex === undefined) return null;
+      return { key: pair.pairKey, aIndex, bIndex, pA, pB };
+    })
+    .filter((e): e is NonNullable<typeof e> => e !== null);
+
+  const labelPositions = computeEdgeLabelPositions({
+    memberCount: members.length,
+    nodePositions,
+    nodeRadius,
+    edges: edgeInputs,
+    labelWidth: labelW,
+    labelHeight: labelH,
+    viewWidth: width,
+    viewHeight: height,
   });
 
   return (
@@ -122,6 +161,7 @@ function StaticGroupGraphSvg({
         />
       )}
 
+      {/* Draw all relationship lines first so score tags always render cleanly above crossing lines */}
       {pairs.map((pair) => {
         const pA = positions.get(pair.a.id);
         const pB = positions.get(pair.b.id);
@@ -133,49 +173,51 @@ function StaticGroupGraphSvg({
         const strokeWidth = isHarmony ? 2.4 : 1.7;
         const dashArray = isTension ? '7 5' : undefined;
 
-        const mx = (pA.x + pB.x) / 2;
-        const my = (pA.y + pB.y) / 2;
-        const dx = pB.x - pA.x;
-        const dy = pB.y - pA.y;
-        const len = Math.hypot(dx, dy) || 1;
-        const passesCenter = members.length >= 4 && Math.hypot(mx - cx, my - cy) < 24;
-        const labelX = passesCenter ? mx + (-dy / len) * 24 : mx;
-        const labelY = passesCenter ? my + (dx / len) * 24 : my;
+        return (
+          <line
+            key={`${pair.pairKey}-line`}
+            x1={pA.x}
+            y1={pA.y}
+            x2={pB.x}
+            y2={pB.y}
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+            strokeDasharray={dashArray}
+          />
+        );
+      })}
+
+      {/* Draw non-overlapping score tags above lines */}
+      {pairs.map((pair) => {
+        const pt = labelPositions.get(pair.pairKey);
+        if (!pt) return null;
+
+        const isHarmony = pair.score >= 76;
+        const isTension = pair.score < 58;
 
         return (
-          <g key={pair.pairKey}>
-            <line
-              x1={pA.x}
-              y1={pA.y}
-              x2={pB.x}
-              y2={pB.y}
-              stroke={strokeColor}
-              strokeWidth={strokeWidth}
-              strokeDasharray={dashArray}
+          <g key={`${pair.pairKey}-label`} transform={`translate(${pt.x}, ${pt.y})`}>
+            <rect
+              x={-labelW / 2}
+              y={-labelH / 2}
+              width={labelW}
+              height={labelH}
+              rx={4}
+              fill="#FFFFFF"
+              stroke={isTension ? '#D8B4A6' : isHarmony ? '#141414' : '#D4D4D4'}
+              strokeWidth={1.3}
             />
-            <g transform={`translate(${labelX}, ${labelY})`}>
-              <rect
-                x={-33}
-                y={-14}
-                width={66}
-                height={28}
-                rx={4}
-                fill="#FFFFFF"
-                stroke={isTension ? '#D8B4A6' : isHarmony ? '#141414' : '#D4D4D4'}
-                strokeWidth={1.3}
-              />
-              <text
-                x={0}
-                y={5}
-                textAnchor="middle"
-                fontSize={14}
-                fontFamily="IBM Plex Mono, Noto Sans KR, monospace"
-                fontWeight={isHarmony ? 600 : 500}
-                fill={isTension ? '#9A3412' : '#141414'}
-              >
-                {pair.score}점
-              </text>
-            </g>
+            <text
+              x={0}
+              y={Math.round(labelFontSize * 0.36)}
+              textAnchor="middle"
+              fontSize={labelFontSize}
+              fontFamily="IBM Plex Mono, Noto Sans KR, monospace"
+              fontWeight={isHarmony ? 600 : 500}
+              fill={isTension ? '#9A3412' : '#141414'}
+            >
+              {`${pair.score}점`}
+            </text>
           </g>
         );
       })}
@@ -202,9 +244,9 @@ function StaticGroupGraphSvg({
             />
             <text
               x={0}
-              y={-5}
+              y={members.length <= 6 ? -5 : -4}
               textAnchor="middle"
-              fontSize={members.length <= 5 ? 19 : 16}
+              fontSize={members.length <= 5 ? 19 : members.length === 6 ? 15.5 : 13.5}
               fontWeight={700}
               fill="#141414"
               fontFamily="Gowun Batang, Georgia, serif"
@@ -213,9 +255,9 @@ function StaticGroupGraphSvg({
             </text>
             <text
               x={0}
-              y={18}
+              y={members.length <= 6 ? 18 : 14}
               textAnchor="middle"
-              fontSize={members.length <= 5 ? 14 : 12.5}
+              fontSize={members.length <= 5 ? 14 : members.length === 6 ? 12 : 10.5}
               fontWeight={500}
               fill={elMeta.color}
               fontFamily="Noto Sans KR, sans-serif"
@@ -652,9 +694,12 @@ const RelationShareCardCanvas = forwardRef<HTMLDivElement, RelationShareCardCanv
                             fontWeight: 600,
                             color: '#14532D',
                             fontVariantNumeric: 'tabular-nums',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0,
+                            display: 'inline-block',
                           }}
                         >
-                          {groupReport.bestPair.score}점
+                          {`${groupReport.bestPair.score}점`}
                         </span>
                         <span style={{ fontSize: fs(21), color: '#525252' }}>
                           {formatExtremePairSub(groupReport.bestPair)}
@@ -699,9 +744,12 @@ const RelationShareCardCanvas = forwardRef<HTMLDivElement, RelationShareCardCanv
                             fontWeight: 600,
                             color: '#9A3412',
                             fontVariantNumeric: 'tabular-nums',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0,
+                            display: 'inline-block',
                           }}
                         >
-                          {groupReport.tensionPair.score}점
+                          {`${groupReport.tensionPair.score}점`}
                         </span>
                         <span style={{ fontSize: fs(21), color: '#525252' }}>
                           {formatExtremePairSub(groupReport.tensionPair)}

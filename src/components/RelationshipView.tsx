@@ -1356,8 +1356,8 @@ export function RelationshipView({
                                             : 'bg-white text-[#404040] hover:bg-[#F5F5F5]'
                                     }`}
                                   >
-                                    <span className="block font-mono text-xs font-medium">
-                                      {pair.score}점
+                                    <span className="block font-mono text-xs font-medium whitespace-nowrap">
+                                      {`${pair.score}점`}
                                     </span>
                                     <span
                                       className={`block text-[10px] mt-0.5 truncate ${
@@ -1407,11 +1407,11 @@ export function RelationshipView({
                               <div className="flex items-center gap-3 shrink-0 text-xs tabular-nums">
                                 <span className="text-[#666666]">{pair.relationTier}</span>
                                 <span
-                                  className={`font-mono font-semibold ${
+                                  className={`font-mono font-semibold whitespace-nowrap ${
                                     pair.score < 58 ? 'text-[#9A3412]' : 'text-[#141414]'
                                   }`}
                                 >
-                                  {pair.score}점
+                                  {`${pair.score}점`}
                                 </span>
                               </div>
                             </button>
@@ -1452,11 +1452,11 @@ export function RelationshipView({
                             {pair.a.name} × {pair.b.name}
                           </span>
                           <span
-                            className={`font-mono text-[11px] ${
+                            className={`font-mono text-[11px] whitespace-nowrap ${
                               isSelected ? 'text-[#D4D4D4]' : 'text-[#6E6E6E]'
                             }`}
                           >
-                            {pair.score}점
+                            {`${pair.score}점`}
                           </span>
                         </button>
                       );
@@ -1732,8 +1732,8 @@ export function RelationshipView({
                         <dt className="text-xs text-[#737373] mb-1">최고의 호흡 조합</dt>
                         <dd className="font-editorial text-base font-bold text-[#141414]">
                           {groupReport.bestPair.a.name} × {groupReport.bestPair.b.name}
-                          <span className="ml-2 font-mono text-xs font-medium text-[#14532D] tabular-nums">
-                            {groupReport.bestPair.score}점
+                          <span className="ml-2 inline-block whitespace-nowrap font-mono text-xs font-medium text-[#14532D] tabular-nums">
+                            {`${groupReport.bestPair.score}점`}
                           </span>
                         </dd>
                         <p className="mt-1.5 text-xs text-[#666666]">
@@ -1747,8 +1747,8 @@ export function RelationshipView({
                         <dt className="text-xs text-[#737373] mb-1">가장 입체적인 자극 조합</dt>
                         <dd className="font-editorial text-base font-bold text-[#141414]">
                           {groupReport.tensionPair.a.name} × {groupReport.tensionPair.b.name}
-                          <span className="ml-2 font-mono text-xs font-medium text-[#9A3412] tabular-nums">
-                            {groupReport.tensionPair.score}점
+                          <span className="ml-2 inline-block whitespace-nowrap font-mono text-xs font-medium text-[#9A3412] tabular-nums">
+                            {`${groupReport.tensionPair.score}점`}
                           </span>
                         </dd>
                         <p className="mt-1.5 text-xs text-[#666666]">
@@ -1762,8 +1762,8 @@ export function RelationshipView({
                         <dt className="text-xs text-[#737373] mb-1">모임의 중심 · 중재자</dt>
                         <dd className="font-editorial text-base font-bold text-[#141414]">
                           {groupReport.mediator.member.name}
-                          <span className="ml-2 font-mono text-xs font-normal text-[#666666] tabular-nums">
-                            평균 {groupReport.mediator.avgScore}점
+                          <span className="ml-2 inline-block whitespace-nowrap font-mono text-xs font-normal text-[#666666] tabular-nums">
+                            {`평균 ${groupReport.mediator.avgScore}점`}
                           </span>
                         </dd>
                         <p className="mt-1.5 text-xs leading-relaxed text-[#666666]">

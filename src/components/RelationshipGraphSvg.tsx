@@ -1,5 +1,6 @@
 import { ELEMENT_META, getPairKey } from '../constants/uiMeta';
 import type { PairCompatibility, RelationMember } from '../types/saju';
+import { computeEdgeLabelPositions } from '../utils/graphLabelLayout';
 
 interface RelationshipGraphSvgProps {
   members: RelationMember[];
@@ -18,10 +19,23 @@ export function RelationshipGraphSvg({
   const height = 400;
   const cx = width / 2;
   const cy = height / 2;
-  const radius = members.length === 2 ? 155 : members.length <= 4 ? 132 : 146;
+  const radius =
+    members.length === 2
+      ? 155
+      : members.length <= 4
+        ? 132
+        : members.length <= 5
+          ? 148
+          : 154;
+  const nodeRadius = members.length <= 5 ? 36 : members.length === 6 ? 30 : 27;
+  const labelW = members.length <= 5 ? 52 : members.length === 6 ? 44 : 40;
+  const labelH = members.length <= 5 ? 22 : members.length === 6 ? 19 : 17;
+  const labelFontSize = members.length <= 5 ? 10.5 : members.length === 6 ? 9.5 : 8.5;
 
   // Position nodes evenly around circle (for 2 members, horizontal left/right; for 3+, start at top -90deg)
   const positions = new Map<string, { x: number; y: number }>();
+  const indexById = new Map<string, number>();
+  const nodePositions: { x: number; y: number }[] = [];
   members.forEach((m, idx) => {
     const angle =
       members.length === 2
@@ -29,10 +43,35 @@ export function RelationshipGraphSvg({
           ? Math.PI
           : 0
         : -Math.PI / 2 + (idx * 2 * Math.PI) / members.length;
-    positions.set(m.id, {
+    const pt = {
       x: cx + Math.cos(angle) * radius,
       y: cy + Math.sin(angle) * radius,
-    });
+    };
+    positions.set(m.id, pt);
+    indexById.set(m.id, idx);
+    nodePositions.push(pt);
+  });
+
+  const edgeInputs = pairs
+    .map((pair) => {
+      const pA = positions.get(pair.a.id);
+      const pB = positions.get(pair.b.id);
+      const aIndex = indexById.get(pair.a.id);
+      const bIndex = indexById.get(pair.b.id);
+      if (!pA || !pB || aIndex === undefined || bIndex === undefined) return null;
+      return { key: pair.pairKey, aIndex, bIndex, pA, pB };
+    })
+    .filter((e): e is NonNullable<typeof e> => e !== null);
+
+  const labelPositions = computeEdgeLabelPositions({
+    memberCount: members.length,
+    nodePositions,
+    nodeRadius,
+    edges: edgeInputs,
+    labelWidth: labelW,
+    labelHeight: labelH,
+    viewWidth: width,
+    viewHeight: height,
   });
 
   return (
@@ -55,7 +94,7 @@ export function RelationshipGraphSvg({
           />
         )}
 
-        {/* Relationship Edges */}
+        {/* Relationship Edge Lines (drawn beneath score tags) */}
         {pairs.map((pair) => {
           const pA = positions.get(pair.a.id);
           const pB = positions.get(pair.b.id);
@@ -76,33 +115,11 @@ export function RelationshipGraphSvg({
           const strokeWidth = isSelected ? 2.5 : isHarmony ? 1.6 : 1.2;
           const dashArray = isTension ? '5 4' : undefined;
 
-          // Midpoint for clickable label badge
-          const mx = (pA.x + pB.x) / 2;
-          const my = (pA.y + pB.y) / 2;
-
-          // Slight perpendicular offset if 4+ members so center diagonals don't stack on top of each other
-          const dx = pB.x - pA.x;
-          const dy = pB.y - pA.y;
-          const len = Math.hypot(dx, dy) || 1;
-          const passesCenter =
-            members.length >= 4 && Math.hypot(mx - cx, my - cy) < 18;
-          const labelX = passesCenter ? mx + (-dy / len) * 18 : mx;
-          const labelY = passesCenter ? my + (dx / len) * 18 : my;
-
           return (
             <g
-              key={pair.pairKey}
+              key={`${pair.pairKey}-line`}
               onClick={() => onSelectPair(pair.pairKey)}
-              className="cursor-pointer group"
-              role="button"
-              tabIndex={0}
-              aria-label={`${pair.a.name}와 ${pair.b.name} 관계: ${pair.relationTier} (${pair.score}점)`}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onSelectPair(pair.pairKey);
-                }
-              }}
+              className="cursor-pointer"
             >
               {/* Invisible wide hit area for easy clicking/tapping */}
               <line
@@ -111,7 +128,7 @@ export function RelationshipGraphSvg({
                 x2={pB.x}
                 y2={pB.y}
                 stroke="transparent"
-                strokeWidth={24}
+                strokeWidth={22}
               />
               {/* Visible editorial hairline */}
               <line
@@ -124,31 +141,55 @@ export function RelationshipGraphSvg({
                 strokeDasharray={dashArray}
                 opacity={selectedPairKey && !isSelected ? 0.45 : 1}
               />
+            </g>
+          );
+        })}
 
-              {/* Crisp rectangular editorial score tag on edge */}
-              <g transform={`translate(${labelX}, ${labelY})`}>
-                <rect
-                  x={-26}
-                  y={-11}
-                  width={52}
-                  height={22}
-                  rx={3}
-                  fill={isSelected ? '#141414' : '#FFFFFF'}
-                  stroke={isSelected ? '#141414' : isTension ? '#D8B4A6' : '#D4D4D4'}
-                  strokeWidth={1}
-                />
-                <text
-                  x={0}
-                  y={4}
-                  textAnchor="middle"
-                  fontSize={10.5}
-                  fontFamily="IBM Plex Mono, Noto Sans KR, monospace"
-                  fontWeight={isSelected ? 600 : 500}
-                  fill={isSelected ? '#FFFFFF' : isTension ? '#9A3412' : '#262626'}
-                >
-                  {pair.score}점
-                </text>
-              </g>
+        {/* Non-overlapping Interactive Score Tags (rendered above lines) */}
+        {pairs.map((pair) => {
+          const pt = labelPositions.get(pair.pairKey);
+          if (!pt) return null;
+
+          const isSelected = pair.pairKey === selectedPairKey;
+          const isTension = pair.score < 58;
+
+          return (
+            <g
+              key={`${pair.pairKey}-label`}
+              transform={`translate(${pt.x}, ${pt.y})`}
+              onClick={() => onSelectPair(pair.pairKey)}
+              className="cursor-pointer"
+              role="button"
+              tabIndex={0}
+              aria-label={`${pair.a.name}와 ${pair.b.name} 관계: ${pair.relationTier} (${pair.score}점)`}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSelectPair(pair.pairKey);
+                }
+              }}
+            >
+              <rect
+                x={-labelW / 2}
+                y={-labelH / 2}
+                width={labelW}
+                height={labelH}
+                rx={3}
+                fill={isSelected ? '#141414' : '#FFFFFF'}
+                stroke={isSelected ? '#141414' : isTension ? '#D8B4A6' : '#D4D4D4'}
+                strokeWidth={1}
+              />
+              <text
+                x={0}
+                y={Math.round(labelFontSize * 0.38)}
+                textAnchor="middle"
+                fontSize={labelFontSize}
+                fontFamily="IBM Plex Mono, Noto Sans KR, monospace"
+                fontWeight={isSelected ? 600 : 500}
+                fill={isSelected ? '#FFFFFF' : isTension ? '#9A3412' : '#262626'}
+              >
+                {`${pair.score}점`}
+              </text>
             </g>
           );
         })}
@@ -163,7 +204,6 @@ export function RelationshipGraphSvg({
             ? selectedPairKey.split('__').includes(member.id)
             : false;
 
-          const nodeRadius = members.length <= 5 ? 36 : 30;
           const displayName =
             member.name.length > 5 ? `${member.name.slice(0, 4)}…` : member.name;
 
@@ -193,7 +233,7 @@ export function RelationshipGraphSvg({
               className="cursor-pointer"
             >
               {/* Expanded transparent touch target */}
-              <circle r={Math.max(nodeRadius + 6, 40)} fill="transparent" />
+              <circle r={Math.max(nodeRadius + 6, 36)} fill="transparent" />
 
               {/* Outer highlight ring if selected */}
               {isPartOfSelected && (
@@ -217,9 +257,9 @@ export function RelationshipGraphSvg({
               {/* Member Name */}
               <text
                 x={0}
-                y={-5}
+                y={members.length <= 6 ? -5 : -4}
                 textAnchor="middle"
-                fontSize={12.5}
+                fontSize={members.length <= 5 ? 12.5 : members.length === 6 ? 11 : 10}
                 fontWeight={700}
                 fill="#141414"
                 fontFamily="Gowun Batang, serif"
@@ -230,9 +270,9 @@ export function RelationshipGraphSvg({
               {/* Day Pillar + Element */}
               <text
                 x={0}
-                y={12}
+                y={members.length <= 6 ? 12 : 10}
                 textAnchor="middle"
-                fontSize={10}
+                fontSize={members.length <= 5 ? 10 : 8.5}
                 fontWeight={500}
                 fill={elMeta.color}
                 fontFamily="Noto Sans KR, sans-serif"
