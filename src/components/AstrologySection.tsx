@@ -1,10 +1,7 @@
 import { useState } from 'react';
 import { SEOLDAM_ASSETS } from '../constants/assets';
-import {
-  AstrologyChart,
-  GrahaId,
-  VEDIC_ELEMENT_META,
-} from '../engine/astrology';
+import { VEDIC_ELEMENT_META } from '../constants/uiMeta';
+import type { AstrologyChart, GrahaId } from '../types/saju';
 import { SeoldamImage } from './SeoldamImage';
 import { VedicKundaliSvg } from './VedicKundaliSvg';
 

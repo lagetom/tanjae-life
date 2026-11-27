@@ -1,4 +1,4 @@
-import {
+import type {
   BirthInput,
   BranchInfo,
   ElementBalanceItem,
@@ -13,8 +13,9 @@ import {
   TenGod,
   TenGodGroup,
   TenGodGroupScore,
-} from './sajuTypes';
-import { isValidSolarDate, lunarToSolar, solarToLunar } from './lunarCalendar';
+} from '../../src/types/saju.ts';
+import { isValidSolarDate, lunarToSolar, solarToLunar } from './lunarCalendar.ts';
+import { LIFE_STAGE_GLOSSARY, TEN_GOD_GLOSSARY } from './sajuKnowledge.ts';
 
 export const ELEMENT_META: Record<
   ElementType,
@@ -225,6 +226,13 @@ function getJulianDayNumber(year: number, month: number, day: number): number {
   );
 }
 
+const PILLAR_ROLE_DESC: Record<Pillar['position'], string> = {
+  hour: '말년 · 자녀 · 내면',
+  day: '나 자신 · 배우자궁',
+  month: '청년 · 직업 · 격국',
+  year: '초년 · 뿌리 · 가풍',
+};
+
 function buildPillar(
   position: Pillar['position'],
   label: string,
@@ -253,6 +261,18 @@ function buildPillar(
     };
   });
 
+  const stemTenGod: TenGod = position === 'day' ? '일간(본원)' : getTenGod(dayMaster, stem);
+  const branchTenGod: TenGod = getTenGod(dayMaster, mainHiddenStem);
+  const lifeStage = getLifeStage(dayMaster, branch.index);
+
+  const stemTG = TEN_GOD_GLOSSARY[stemTenGod];
+  const branchTG = TEN_GOD_GLOSSARY[branchTenGod];
+  const stageDesc = LIFE_STAGE_GLOSSARY[lifeStage] ?? '';
+  const hiddenText = hiddenStems
+    .map((h) => `${h.stem.hangul}(${h.stem.hanja} · ${h.tenGod})`)
+    .join(', ');
+  const roleDesc = PILLAR_ROLE_DESC[position];
+
   return {
     position,
     label,
@@ -260,11 +280,17 @@ function buildPillar(
     branch,
     ganjiHangul: `${stem.hangul}${branch.hangul}`,
     ganjiHanja: `${stem.hanja}${branch.hanja}`,
-    stemTenGod: position === 'day' ? '일간(본원)' : getTenGod(dayMaster, stem),
-    branchTenGod: getTenGod(dayMaster, mainHiddenStem),
+    stemTenGod,
+    branchTenGod,
     hiddenStems,
-    lifeStage: getLifeStage(dayMaster, branch.index),
+    lifeStage,
     isKnown,
+    explanation: {
+      title: `${label} — ${stem.hangul}${branch.hangul}(${stem.hanja}${branch.hanja})`,
+      subtitle: `${roleDesc} · 12운성 ${lifeStage}`,
+      roleInChart: `천간 ${stem.hangul}(${stem.hanja}, ${stemTenGod}) · 지지 ${branch.hangul}(${branch.hanja}, ${branchTenGod}) · 지장간 ${hiddenText}`,
+      description: `천간 '${stem.hangul}(${stem.hanja})'은 ${stem.natureTitle}의 기운으로 이 명식에서 '${stemTenGod}'(${stemTG.summary}) 역할을 맡습니다. 지지 '${branch.hangul}(${branch.hanja})'는 '${branchTenGod}'(${branchTG.summary})의 뿌리를 이루며, 12운성 '${lifeStage}'에 해당합니다. ${stageDesc}`,
+    },
   };
 }
 

@@ -1,145 +1,32 @@
-import { ELEMENT_META } from './manseryeok';
-import { SajuChart } from './sajuTypes';
+import { ELEMENT_META } from './manseryeok.ts';
+import type {
+  AstrologyChart,
+  CrossInsight,
+  DashaPeriod,
+  GrahaId,
+  GrahaPlacement,
+  Modality,
+  NakshatraInfo,
+  RahuKetuAxis,
+  RashiInfo,
+  SajuChart,
+  VedicElement,
+  VedicElementBalance,
+} from '../../src/types/saju.ts';
 
-export type VedicElement = 'fire' | 'earth' | 'air' | 'water';
-export type Modality = 'cardinal' | 'fixed' | 'mutable';
-export type GrahaId =
-  | 'lagna'
-  | 'moon'
-  | 'sun'
-  | 'mars'
-  | 'mercury'
-  | 'jupiter'
-  | 'venus'
-  | 'saturn'
-  | 'rahu'
-  | 'ketu';
-
-export interface RashiInfo {
-  index: number; // 0..11
-  number: number; // 1..12 (traditional Vedic Rashi number)
-  sanskritKo: string;
-  nameKo: string;
-  nameEn: string;
-  symbol: string;
-  element: VedicElement;
-  modality: Modality;
-  rulerKo: string;
-  keyword: string;
-  moonTrait: string;
-  sunTrait: string;
-  lagnaTrait: string;
-  venusTrait: string;
-  marsTrait: string;
-}
-
-export interface NakshatraInfo {
-  index: number; // 0..26
-  nameKo: string;
-  nameEn: string;
-  rulerId: Exclude<GrahaId, 'lagna'>;
-  rulerKo: string;
-  symbolKo: string;
-  gana: '데바(조화형)' | '마누샤(현실형)' | '락샤사(돌파형)';
-  keyword: string;
-  description: string;
-}
-
-export interface GrahaPlacement {
-  id: GrahaId;
-  nameKo: string;
-  sanskritKo: string;
-  shortLabel: string; // For North Indian Kundali diagram
-  symbol: string;
-  domainKo: string;
-  longitude: number; // 0..360 Sidereal (Lahiri)
-  sign: RashiInfo;
-  degreeInSign: number; // 0..29.99
-  degreeLabel: string;
-  nakshatra: NakshatraInfo;
-  pada: number; // 1..4
-  house: number; // 1..12 (Whole Sign from Lagna, or Chandra if time unknown)
-  houseDomain: string;
-  interpretation: string;
-}
-
-export interface DashaPeriod {
-  lordId: Exclude<GrahaId, 'lagna'>;
-  lordKo: string;
-  sanskritKo: string;
-  startYear: number;
-  endYear: number;
-  durationYears: number;
-  isCurrent: boolean;
-  theme: string;
-}
-
-export interface VedicElementBalance {
-  element: VedicElement;
-  nameKo: string;
-  count: number;
-  percentage: number;
-  color: string;
-}
-
-export interface RahuKetuAxis {
-  rahuSign: RashiInfo;
-  ketuSign: RashiInfo;
-  rahuHouse: number;
-  ketuHouse: number;
-  headline: string;
-  rahuGuidance: string;
-  ketuGuidance: string;
-}
-
-export interface CrossInsight {
-  headline: string;
-  sharedTheme: string;
-  contrastNote: string;
-  synthesisPoints: {
-    label: string;
-    content: string;
-  }[];
-  seoldamQuote: string;
-  footnote: string;
-}
-
-export interface AstrologyChart {
-  ayanamsaDeg: number;
-  ayanamsaLabel: string;
-  chartBase: 'lagna' | 'chandra';
-  baseRashiIndex: number; // 0..11 sign placed in House 1
-  placements: GrahaPlacement[];
-  lagna: GrahaPlacement | null;
-  moon: GrahaPlacement;
-  sun: GrahaPlacement;
-  mars: GrahaPlacement;
-  mercury: GrahaPlacement;
-  jupiter: GrahaPlacement;
-  venus: GrahaPlacement;
-  saturn: GrahaPlacement;
-  rahu: GrahaPlacement;
-  ketu: GrahaPlacement;
-  janmaNakshatra: {
-    info: NakshatraInfo;
-    pada: number;
-    padaFocus: string;
-  };
-  dashas: {
-    currentMahadasha: DashaPeriod;
-    currentAntardasha: {
-      lordKo: string;
-      sanskritKo: string;
-      endYearMonth: string;
-      theme: string;
-    };
-    timeline: DashaPeriod[];
-  };
-  rahuKetuAxis: RahuKetuAxis;
-  elements: VedicElementBalance[];
-  dominantElement: VedicElementBalance;
-  crossInsight: CrossInsight;
-}
+export type {
+  AstrologyChart,
+  CrossInsight,
+  DashaPeriod,
+  GrahaId,
+  GrahaPlacement,
+  Modality,
+  NakshatraInfo,
+  RahuKetuAxis,
+  RashiInfo,
+  VedicElement,
+  VedicElementBalance,
+};
 
 export const VEDIC_ELEMENT_META: Record<
   VedicElement,

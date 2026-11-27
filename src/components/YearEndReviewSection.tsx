@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { SEOLDAM_ASSETS } from '../constants/assets';
-import { MonthlyReview2026, YearEndReview2026 } from '../engine/annualFortune';
+import type { MonthlyReview2026, YearEndReview2026 } from '../types/saju';
 import { SeoldamImage } from './SeoldamImage';
 
 interface YearEndReviewSectionProps {

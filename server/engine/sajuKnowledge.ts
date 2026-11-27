@@ -1,4 +1,4 @@
-import { ElementType, PresetProfile, TenGod, TenGodGroup } from './sajuTypes';
+import type { ElementType, PresetProfile, TenGod, TenGodGroup } from '../../src/types/saju.ts';
 
 export interface DayPillarProfile {
   symbol: string;

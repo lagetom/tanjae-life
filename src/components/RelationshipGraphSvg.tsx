@@ -1,5 +1,5 @@
-import { ELEMENT_META } from '../engine/manseryeok';
-import { PairCompatibility, RelationMember, getPairKey } from '../engine/sajuRelationship';
+import { ELEMENT_META, getPairKey } from '../constants/uiMeta';
+import type { PairCompatibility, RelationMember } from '../types/saju';
 
 interface RelationshipGraphSvgProps {
   members: RelationMember[];

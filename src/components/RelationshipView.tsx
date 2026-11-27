@@ -13,31 +13,36 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { SEOLDAM_ASSETS } from '../constants/assets';
-import { ELEMENT_META } from '../engine/manseryeok';
 import {
+  ELEMENT_META,
+  SAMPLE_RELATION_BATCH_TEXT,
+  getPairKey,
+} from '../constants/uiMeta';
+import type {
+  CalendarType,
+  GroupChemistryReport,
   PillarOrderMode,
   RelationMember,
-  SAMPLE_RELATION_BATCH_TEXT,
-  analyzeGroupChemistry,
-  createMemberFromBirthInput,
-  createMemberFromCode,
-  createMemberFromSajuChart,
-  createSampleRelationMembers,
-  getPairKey,
-  parseBatchMembersText,
-  parseManseryeokCode,
-} from '../engine/sajuRelationship';
-import { CalendarType, SajuChart } from '../engine/sajuTypes';
-import { LedgerEntry, isEntryInLedger } from '../utils/storage';
+} from '../types/saju';
+import { fetchRelationshipAction, toMemberSeeds } from '../utils/api';
+import { previewShorthandCode } from '../utils/shorthandCheck';
+import { type LedgerEntry, isEntryInLedger } from '../utils/storage';
 import { RelationshipGraphSvg } from './RelationshipGraphSvg';
 import { ResetStorageButton } from './ResetStorageButton';
 import { SeoldamImage } from './SeoldamImage';
 
 interface RelationshipViewProps {
-  myChart: SajuChart | null;
+  hasPersonalReport: boolean;
+  selfMember: RelationMember | null;
   members: RelationMember[];
+  groupReport: GroupChemistryReport | null;
+  isBusy: boolean;
   ledgerEntries: LedgerEntry[];
-  onChangeMembers: (next: RelationMember[]) => void;
+  onUpdateRelationState: (
+    nextMembers: RelationMember[],
+    nextReport: GroupChemistryReport | null
+  ) => void;
+  onSetBusy: (busy: boolean) => void;
   onSaveMemberToLedger: (member: RelationMember) => void;
   onClearLedger: () => void;
   onBackToPersonal: () => void;
@@ -49,10 +54,14 @@ type InputTab = 'single' | 'batch' | 'birth';
 const MAX_MEMBERS = 8;
 
 export function RelationshipView({
-  myChart,
+  hasPersonalReport,
+  selfMember,
   members,
+  groupReport,
+  isBusy,
   ledgerEntries,
-  onChangeMembers,
+  onUpdateRelationState,
+  onSetBusy,
   onSaveMemberToLedger,
   onClearLedger,
   onBackToPersonal,
@@ -86,18 +95,15 @@ export function RelationshipView({
   const [selectedPairKey, setSelectedPairKey] = useState<string | null>(null);
   const [copiedSummary, setCopiedSummary] = useState(false);
 
-  // Live preview for single shorthand input
+  // Live syntax preview for single shorthand input
   const livePreview = useMemo(() => {
     if (!singleCode.trim()) return null;
-    return parseManseryeokCode(singleCode, orderMode);
+    return previewShorthandCode(singleCode, orderMode);
   }, [singleCode, orderMode]);
-
-  // Group chemistry calculation
-  const groupReport = useMemo(() => analyzeGroupChemistry(members), [members]);
 
   // Resolve active pair cleanly
   const activePair = useMemo(() => {
-    if (groupReport.pairs.length === 0) return null;
+    if (!groupReport || groupReport.pairs.length === 0) return null;
     if (selectedPairKey && groupReport.pairMap[selectedPairKey]) {
       return groupReport.pairMap[selectedPairKey];
     }
@@ -105,30 +111,42 @@ export function RelationshipView({
   }, [groupReport, selectedPairKey]);
 
   const myChartAlreadyIncluded = useMemo(() => {
-    if (!myChart) return false;
+    if (!selfMember) return false;
     return members.some((m) => m.id === 'my-report-self');
-  }, [myChart, members]);
+  }, [selfMember, members]);
 
   const isShowingSampleOnly = useMemo(
     () => members.length > 0 && members.every((m) => m.isSample),
     [members]
   );
 
-  const handleAddMyChart = () => {
-    if (!myChart || myChartAlreadyIncluded) return;
+  const handleAddMyChart = async () => {
+    if (!selfMember || myChartAlreadyIncluded || isBusy) return;
     const base = isShowingSampleOnly ? [] : members;
     if (base.length >= MAX_MEMBERS) {
       setSingleError(`최대 ${MAX_MEMBERS}명까지 함께 분석할 수 있습니다.`);
       return;
     }
-    const selfMember = createMemberFromSajuChart(myChart);
-    const next = [selfMember, ...base];
-    onChangeMembers(next);
-    setSelectedPairKey(next.length >= 2 ? getPairKey(next[0].id, next[1].id) : null);
+    onSetBusy(true);
+    try {
+      const nextSeeds = toMemberSeeds([selfMember, ...base]);
+      const res = await fetchRelationshipAction({ action: 'analyze', members: nextSeeds });
+      if (res.ok) {
+        onUpdateRelationState(res.members, res.groupReport);
+        setSelectedPairKey(
+          res.members.length >= 2 ? getPairKey(res.members[0].id, res.members[1].id) : null
+        );
+      }
+    } catch (err) {
+      setSingleError(err instanceof Error ? err.message : '내 명식을 추가하지 못했습니다.');
+    } finally {
+      onSetBusy(false);
+    }
   };
 
-  const handleAddSingle = (e: FormEvent) => {
+  const handleAddSingle = async (e: FormEvent) => {
     e.preventDefault();
+    if (isBusy) return;
     setSingleError(null);
 
     const base = isShowingSampleOnly ? [] : members;
@@ -139,60 +157,79 @@ export function RelationshipView({
 
     const fallbackLabel = String.fromCharCode(65 + (base.length % 26));
     const displayName = singleName.trim() || `친구 ${fallbackLabel}`;
-    const result = createMemberFromCode(
-      `m-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      displayName,
-      singleCode,
-      orderMode
-    );
 
-    if (!result.ok) {
-      setSingleError(result.error);
-      return;
-    }
+    onSetBusy(true);
+    try {
+      const res = await fetchRelationshipAction({
+        action: 'parse-single',
+        id: `m-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        name: displayName,
+        code: singleCode,
+        orderMode,
+        existingMembers: toMemberSeeds(base),
+      });
 
-    const next = [...base, result.member];
-    onChangeMembers(next);
-    if (next.length >= 2) {
-      setSelectedPairKey(getPairKey(next[0].id, result.member.id));
-    } else {
-      setSelectedPairKey(null);
+      if (!res.ok) {
+        setSingleError(res.error || '만세력을 확인해 주세요.');
+        return;
+      }
+
+      onUpdateRelationState(res.members, res.groupReport);
+      if (res.members.length >= 2 && res.addedMember) {
+        setSelectedPairKey(getPairKey(res.members[0].id, res.addedMember.id));
+      } else {
+        setSelectedPairKey(null);
+      }
+      setSingleName('');
+      setSingleCode('');
+    } catch (err) {
+      setSingleError(err instanceof Error ? err.message : '만세력을 추가하지 못했습니다.');
+    } finally {
+      onSetBusy(false);
     }
-    setSingleName('');
-    setSingleCode('');
   };
 
-  const handleApplyBatch = (mode: 'replace' | 'append') => {
+  const handleApplyBatch = async (mode: 'replace' | 'append') => {
+    if (isBusy) return;
     setBatchErrors([]);
     setBatchNotice(null);
 
-    const { members: parsed, errors } = parseBatchMembersText(batchText, orderMode);
-    if (errors.length > 0) {
-      setBatchErrors(errors);
-      if (parsed.length === 0) return;
-    }
-
-    if (parsed.length === 0) {
-      setBatchErrors(['해석할 만세력 줄을 입력해 주세요. 예: 김봄 계병무경사술자술']);
-      return;
-    }
-
     const base = mode === 'replace' || isShowingSampleOnly ? [] : members;
-    const combined = [...base, ...parsed];
-    const trimmed = combined.slice(0, MAX_MEMBERS);
-    onChangeMembers(trimmed);
-    setSelectedPairKey(
-      trimmed.length >= 2 ? getPairKey(trimmed[0].id, trimmed[1].id) : null
-    );
-    setBatchNotice(
-      combined.length > MAX_MEMBERS
-        ? `${MAX_MEMBERS}명까지 반영되었습니다. (최대 ${MAX_MEMBERS}명)`
-        : `${parsed.length}명의 만세력을 ${base.length === 0 ? '새로 반영했습니다' : '목록에 추가했습니다'}.`
-    );
+    onSetBusy(true);
+    try {
+      const res = await fetchRelationshipAction({
+        action: 'parse-batch',
+        batchText,
+        orderMode,
+        baseMembers: toMemberSeeds(base),
+      });
+
+      if (!res.ok) {
+        setBatchErrors(res.errors || [res.error || '일괄 입력을 확인해 주세요.']);
+        return;
+      }
+
+      if (res.errors && res.errors.length > 0) {
+        setBatchErrors(res.errors);
+      }
+      onUpdateRelationState(res.members, res.groupReport);
+      setSelectedPairKey(
+        res.members.length >= 2 ? getPairKey(res.members[0].id, res.members[1].id) : null
+      );
+      const count = res.parsedCount ?? res.members.length;
+      setBatchNotice(
+        `${count}명의 만세력을 ${base.length === 0 ? '새로 반영했습니다' : '목록에 추가했습니다'}.`
+      );
+    } catch (err) {
+      setBatchErrors([err instanceof Error ? err.message : '일괄 분석 중 오류가 발생했습니다.']);
+    } finally {
+      onSetBusy(false);
+    }
   };
 
-  const handleAddFromBirth = (e: FormEvent) => {
+  const handleAddFromBirth = async (e: FormEvent) => {
     e.preventDefault();
+    if (isBusy) return;
     setBirthError(null);
 
     const base = isShowingSampleOnly ? [] : members;
@@ -213,53 +250,96 @@ export function RelationshipView({
     }
 
     const fallbackLabel = String.fromCharCode(65 + (base.length % 26));
-    const res = createMemberFromBirthInput(`b-${Date.now()}`, {
-      name: birthName.trim() || `친구 ${fallbackLabel}`,
-      gender: 'female',
-      calendarType: birthCalendar,
-      year: y,
-      month: m,
-      day: d,
-      isLeapMonth: false,
-      hour: isNaN(h) ? 12 : h,
-      minute: isNaN(min) ? 0 : min,
-      unknownTime: birthUnknownTime,
-      useTrueSolarTime: true,
-    });
+    onSetBusy(true);
+    try {
+      const res = await fetchRelationshipAction({
+        action: 'from-birth',
+        id: `b-${Date.now()}`,
+        input: {
+          name: birthName.trim() || `친구 ${fallbackLabel}`,
+          gender: 'female',
+          calendarType: birthCalendar,
+          year: y,
+          month: m,
+          day: d,
+          isLeapMonth: false,
+          hour: isNaN(h) ? 12 : h,
+          minute: isNaN(min) ? 0 : min,
+          unknownTime: birthUnknownTime,
+          useTrueSolarTime: true,
+        },
+        existingMembers: toMemberSeeds(base),
+      });
 
-    if (!res.ok) {
-      setBirthError(res.error);
-      return;
-    }
+      if (!res.ok) {
+        setBirthError(res.error || '생년월일을 변환하지 못했습니다.');
+        return;
+      }
 
-    const next = [...base, res.member];
-    onChangeMembers(next);
-    if (next.length >= 2) {
-      setSelectedPairKey(getPairKey(next[0].id, res.member.id));
-    } else {
-      setSelectedPairKey(null);
+      onUpdateRelationState(res.members, res.groupReport);
+      if (res.members.length >= 2 && res.addedMember) {
+        setSelectedPairKey(getPairKey(res.members[0].id, res.addedMember.id));
+      } else {
+        setSelectedPairKey(null);
+      }
+      setBirthName('');
+    } catch (err) {
+      setBirthError(err instanceof Error ? err.message : '생년월일 변환 중 오류가 발생했습니다.');
+    } finally {
+      onSetBusy(false);
     }
-    setBirthName('');
   };
 
-  const handleRemoveMember = (id: string) => {
-    const next = members.filter((m) => m.id !== id);
-    onChangeMembers(next);
+  const handleRemoveMember = async (id: string) => {
+    if (isBusy) return;
+    const remaining = members.filter((m) => m.id !== id);
     if (selectedPairKey && selectedPairKey.split('__').includes(id)) {
       setSelectedPairKey(null);
     }
+    if (remaining.length < 2) {
+      onUpdateRelationState(remaining, null);
+      return;
+    }
+
+    onSetBusy(true);
+    try {
+      const res = await fetchRelationshipAction({
+        action: 'analyze',
+        members: toMemberSeeds(remaining),
+      });
+      if (res.ok) {
+        onUpdateRelationState(res.members, res.groupReport);
+      }
+    } catch {
+      onUpdateRelationState(remaining, groupReport);
+    } finally {
+      onSetBusy(false);
+    }
   };
 
-  const handleLoadSample = () => {
-    const sample = createSampleRelationMembers();
-    onChangeMembers(sample);
-    setBatchText(SAMPLE_RELATION_BATCH_TEXT);
-    setBatchErrors([]);
-    setBatchNotice(null);
-    setSelectedPairKey(sample.length >= 2 ? getPairKey(sample[0].id, sample[1].id) : null);
+  const handleLoadSample = async () => {
+    if (isBusy) return;
+    onSetBusy(true);
+    try {
+      const res = await fetchRelationshipAction({ action: 'sample' });
+      if (res.ok) {
+        onUpdateRelationState(res.members, res.groupReport);
+        setBatchText(res.batchText ?? SAMPLE_RELATION_BATCH_TEXT);
+        setBatchErrors([]);
+        setBatchNotice(null);
+        setSelectedPairKey(
+          res.members.length >= 2 ? getPairKey(res.members[0].id, res.members[1].id) : null
+        );
+      }
+    } catch (err) {
+      setSingleError(err instanceof Error ? err.message : '예시 데이터를 불러오지 못했습니다.');
+    } finally {
+      onSetBusy(false);
+    }
   };
 
-  const handleAddFromLedgerEntry = (entry: LedgerEntry) => {
+  const handleAddFromLedgerEntry = async (entry: LedgerEntry) => {
+    if (isBusy) return;
     setSingleError(null);
     const base = isShowingSampleOnly ? [] : members;
     const already = base.some(
@@ -271,41 +351,71 @@ export function RelationshipView({
       return;
     }
 
-    const built =
-      entry.kind === 'birth' && entry.birthInput
-        ? createMemberFromBirthInput(`ledger-${entry.id}`, entry.birthInput)
-        : createMemberFromCode(`ledger-${entry.id}`, entry.name, entry.shorthand, 'hour-first');
-
-    if (!built.ok) return;
-    const next = [...base, built.member];
-    onChangeMembers(next);
-    setSelectedPairKey(
-      next.length >= 2 ? getPairKey(next[0].id, built.member.id) : null
-    );
+    onSetBusy(true);
+    try {
+      const res = await fetchRelationshipAction({
+        action: 'from-ledger',
+        entries: [
+          {
+            id: entry.id,
+            name: entry.name,
+            kind: entry.kind,
+            shorthand: entry.shorthand,
+            birthInput: entry.birthInput,
+          },
+        ],
+        existingMembers: toMemberSeeds(base),
+      });
+      if (res.ok) {
+        onUpdateRelationState(res.members, res.groupReport);
+        const last = res.members[res.members.length - 1];
+        setSelectedPairKey(
+          res.members.length >= 2 && last ? getPairKey(res.members[0].id, last.id) : null
+        );
+      }
+    } catch (err) {
+      setSingleError(err instanceof Error ? err.message : '명부에서 불러오지 못했습니다.');
+    } finally {
+      onSetBusy(false);
+    }
   };
 
-  const handleLoadAllFromLedger = () => {
+  const handleLoadAllFromLedger = async () => {
+    if (isBusy) return;
     setSingleError(null);
-    const loaded: RelationMember[] = [];
-    for (const entry of ledgerEntries.slice(0, MAX_MEMBERS)) {
-      const built =
-        entry.kind === 'birth' && entry.birthInput
-          ? createMemberFromBirthInput(`ledger-${entry.id}`, entry.birthInput)
-          : createMemberFromCode(`ledger-${entry.id}`, entry.name, entry.shorthand, 'hour-first');
-      if (built.ok) loaded.push(built.member);
+    onSetBusy(true);
+    try {
+      const res = await fetchRelationshipAction({
+        action: 'from-ledger',
+        entries: ledgerEntries.slice(0, MAX_MEMBERS).map((entry) => ({
+          id: entry.id,
+          name: entry.name,
+          kind: entry.kind,
+          shorthand: entry.shorthand,
+          birthInput: entry.birthInput,
+        })),
+        existingMembers: [],
+      });
+      if (res.ok) {
+        onUpdateRelationState(res.members, res.groupReport);
+        setSelectedPairKey(
+          res.members.length >= 2 ? getPairKey(res.members[0].id, res.members[1].id) : null
+        );
+      }
+    } catch (err) {
+      setSingleError(err instanceof Error ? err.message : '명부 전체 불러오기에 실패했습니다.');
+    } finally {
+      onSetBusy(false);
     }
-    onChangeMembers(loaded);
-    setSelectedPairKey(
-      loaded.length >= 2 ? getPairKey(loaded[0].id, loaded[1].id) : null
-    );
   };
 
   const handleClearAll = () => {
-    onChangeMembers([]);
+    onUpdateRelationState([], null);
     setSelectedPairKey(null);
   };
 
   const handleCopyRelationSummary = async () => {
+    if (!groupReport) return;
     const lines = [
       `[저승차사 재(災) 사주 관계도 리포트 · ${members.length}인 명리 분석]`,
       ...members.map((m) => `- ${m.name}: ${m.shorthand} (${m.dayPillarCode}일주 · 용신 ${ELEMENT_META[m.yongsinPrimary].hangul})`),
@@ -393,7 +503,7 @@ export function RelationshipView({
                 className="min-h-[44px] sm:min-h-[36px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-[#525252] bg-[#FAFAFA] border border-[#E5E5E5] rounded-md hover:text-[#141414] hover:border-[#141414] transition-colors cursor-pointer whitespace-nowrap"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                <span>{myChart ? '내 리포트로' : '개인 사주 풀이'}</span>
+                <span>{hasPersonalReport ? '내 리포트로' : '개인 사주 풀이'}</span>
               </button>
               {ledgerEntries.length > 0 && (
                 <ResetStorageButton
@@ -418,11 +528,12 @@ export function RelationshipView({
                     만세력 직접 입력
                   </h2>
                 </div>
-                {myChart && !myChartAlreadyIncluded && (
+                {selfMember && !myChartAlreadyIncluded && (
                   <button
                     type="button"
+                    disabled={isBusy}
                     onClick={handleAddMyChart}
-                    className="min-h-[40px] inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-[#141414] bg-[#FAFAFA] border border-[#D4D4D4] rounded hover:border-[#141414] transition-colors cursor-pointer whitespace-nowrap"
+                    className="min-h-[40px] inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-[#141414] bg-[#FAFAFA] border border-[#D4D4D4] rounded hover:border-[#141414] disabled:opacity-50 transition-colors cursor-pointer whitespace-nowrap"
                   >
                     <Plus className="w-3 h-3" />
                     <span>내 명식 넣기</span>
@@ -616,16 +727,7 @@ export function RelationshipView({
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <span className="text-[#666666]">인식된 원국</span>
                           <span className="font-medium text-[#141414]">
-                            {(() => {
-                              const chars = Array.from(livePreview.normalizedCode);
-                              const half = chars.length / 2;
-                              const stems = chars.slice(0, half);
-                              const branches = chars.slice(half);
-                              if (livePreview.raw.hour) {
-                                return `${stems[0]}${branches[0]}(시) · ${stems[1]}${branches[1]}(일) · ${stems[2]}${branches[2]}(월) · ${stems[3]}${branches[3]}(년)`;
-                              }
-                              return `미상(시) · ${stems[0]}${branches[0]}(일) · ${stems[1]}${branches[1]}(월) · ${stems[2]}${branches[2]}(년)`;
-                            })()}
+                            {livePreview.previewLabel}
                           </span>
                         </div>
                       ) : (
@@ -1040,10 +1142,12 @@ export function RelationshipView({
         </section>
 
         {/* Require at least 2 members for compatibility analysis */}
-        {members.length < 2 ? (
+        {members.length < 2 || !groupReport ? (
           <section className="py-16 text-center">
             <p className="font-editorial text-xl font-bold text-[#141414]">
-              두 사람 이상의 만세력이 모이면 관계도가 펼쳐집니다
+              {isBusy
+                ? '명리 상관관계를 차분히 대조하고 있습니다…'
+                : '두 사람 이상의 만세력이 모이면 관계도가 펼쳐집니다'}
             </p>
             <p className="mt-2 text-sm text-[#666666]">
               현재 {members.length}명 등록됨 · 친구를 한 명 더 추가하거나 상단의 ‘예시 4인 불러오기’를 눌러 보세요.

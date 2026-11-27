@@ -1,15 +1,14 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { ArrowRight, BookMarked, Check, Trash2, Users } from 'lucide-react';
 import { SEOLDAM_ASSETS } from '../constants/assets';
+import { ELEMENT_META, PRESET_PROFILES } from '../constants/uiMeta';
+import type { BirthInput, PresetProfile } from '../types/saju';
 import {
   getLunarLeapMonth,
   getLunarMonthDays,
   isValidSolarDate,
-} from '../engine/lunarCalendar';
-import { ELEMENT_META } from '../engine/manseryeok';
-import { PRESET_PROFILES } from '../engine/sajuKnowledge';
-import { BirthInput, PresetProfile } from '../engine/sajuTypes';
-import { LedgerEntry } from '../utils/storage';
+} from '../utils/lunarClient';
+import type { LedgerEntry } from '../utils/storage';
 import { ResetStorageButton } from './ResetStorageButton';
 import { SeoldamImage } from './SeoldamImage';
 
@@ -17,8 +16,12 @@ interface HeroInputViewProps {
   initialInput: BirthInput;
   formSyncVersion: number;
   ledgerEntries: LedgerEntry[];
-  onSubmit: (input: BirthInput) => void;
-  onSaveToLedger: (input: BirthInput) => { entry: LedgerEntry; updatedExisting: boolean };
+  isSubmitting?: boolean;
+  serverError?: string | null;
+  onSubmit: (input: BirthInput) => void | Promise<void>;
+  onSaveToLedger: (
+    input: BirthInput
+  ) => Promise<{ entry: LedgerEntry; updatedExisting: boolean }>;
   onOpenLedgerEntry: (entry: LedgerEntry) => void;
   onFillFormFromLedger: (entry: LedgerEntry) => void;
   onRemoveLedgerEntry: (id: string) => void;
@@ -47,6 +50,8 @@ export function HeroInputView({
   initialInput,
   formSyncVersion,
   ledgerEntries,
+  isSubmitting = false,
+  serverError = null,
   onSubmit,
   onSaveToLedger,
   onOpenLedgerEntry,
@@ -70,6 +75,7 @@ export function HeroInputView({
   const [useTrueSolarTime, setUseTrueSolarTime] = useState(initialInput.useTrueSolarTime);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [savedNotice, setSavedNotice] = useState<string | null>(null);
+  const [isSavingLedger, setIsSavingLedger] = useState(false);
 
   useEffect(() => {
     setName(initialInput.name);
@@ -181,21 +187,32 @@ export function HeroInputView({
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     const validated = validateAndBuildInput();
     if (!validated) return;
     onSubmit(validated);
   };
 
-  const handleSaveToLedgerClick = () => {
+  const handleSaveToLedgerClick = async () => {
+    if (isSavingLedger || isSubmitting) return;
     const validated = validateAndBuildInput();
     if (!validated) return;
-    const { entry, updatedExisting } = onSaveToLedger(validated);
-    setSavedNotice(
-      updatedExisting
-        ? `${entry.name}님의 명부 기록을 최신으로 갱신했습니다.`
-        : `${entry.name}님을 재(災)의 명부에 올렸습니다.`
-    );
-    window.setTimeout(() => setSavedNotice(null), 3000);
+    setIsSavingLedger(true);
+    try {
+      const { entry, updatedExisting } = await onSaveToLedger(validated);
+      setSavedNotice(
+        updatedExisting
+          ? `${entry.name}님의 명부 기록을 최신으로 갱신했습니다.`
+          : `${entry.name}님을 재(災)의 명부에 올렸습니다.`
+      );
+      window.setTimeout(() => setSavedNotice(null), 3000);
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error ? err.message : '명부에 기록하는 중 오류가 발생했습니다.'
+      );
+    } finally {
+      setIsSavingLedger(false);
+    }
   };
 
   return (
@@ -488,12 +505,12 @@ export function HeroInputView({
                 </div>
               </div>
 
-              {errorMessage && (
+              {(errorMessage || serverError) && (
                 <div
                   role="alert"
                   className="mt-5 px-4 py-3 text-xs text-[#9A3412] bg-[#FDF5F2] border border-[#E9CEC3] rounded-md"
                 >
-                  오류 안내 · {errorMessage}
+                  오류 안내 · {errorMessage || serverError}
                 </div>
               )}
 
@@ -501,15 +518,16 @@ export function HeroInputView({
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
+                    disabled={isSavingLedger || isSubmitting}
                     onClick={handleSaveToLedgerClick}
-                    className="min-h-[44px] sm:min-h-[40px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-medium text-[#141414] bg-white border border-[#D4D4D4] rounded-md hover:border-[#141414] transition-colors cursor-pointer whitespace-nowrap"
+                    className="min-h-[44px] sm:min-h-[40px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-medium text-[#141414] bg-white border border-[#D4D4D4] rounded-md hover:border-[#141414] disabled:opacity-50 transition-colors cursor-pointer whitespace-nowrap"
                   >
                     {savedNotice ? (
                       <Check className="w-3.5 h-3.5 text-[#14532D]" />
                     ) : (
                       <BookMarked className="w-3.5 h-3.5" />
                     )}
-                    <span>명부에 올리기</span>
+                    <span>{isSavingLedger ? '명부에 적는 중…' : '명부에 올리기'}</span>
                   </button>
                   {ledgerEntries.length > 0 && (
                     <a
@@ -523,9 +541,12 @@ export function HeroInputView({
 
                 <button
                   type="submit"
-                  className="w-full sm:w-auto min-h-[48px] sm:min-h-[44px] inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-medium text-white bg-[#141414] rounded-md hover:bg-[#2E2E2E] transition-colors cursor-pointer whitespace-nowrap"
+                  disabled={isSubmitting}
+                  className="w-full sm:w-auto min-h-[48px] sm:min-h-[44px] inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-medium text-white bg-[#141414] rounded-md hover:bg-[#2E2E2E] disabled:opacity-60 transition-colors cursor-pointer whitespace-nowrap"
                 >
-                  <span>2026·2027 리포트 보기</span>
+                  <span>
+                    {isSubmitting ? '명식과 별자리 읽는 중…' : '2026·2027 리포트 보기'}
+                  </span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
@@ -812,7 +833,7 @@ export function HeroInputView({
               </p>
             </div>
             <p className="mt-8 text-xs text-[#6E6E6E]">
-              저승차사 재(災) 명리 리포트 · 모든 계산과 저장은 현재 기기 브라우저 내에서만 처리되며 외부 서버로 전송되지 않습니다.
+              저승차사 재(災) 명리 리포트 · 입력하신 생년월일은 일회성 풀이 산출에만 쓰이고 서버에 저장되지 않으며, 명부 기록은 현재 기기 브라우저에만 보관됩니다.
             </p>
           </div>
         </div>

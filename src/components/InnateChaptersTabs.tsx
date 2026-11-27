@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { SEOLDAM_ASSETS } from '../constants/assets';
-import { ChapterId, ReportChapter } from '../engine/sajuTypes';
+import type { ChapterId, ReportChapter } from '../types/saju';
 import { SeoldamImage } from './SeoldamImage';
 
 interface InnateChaptersTabsProps {

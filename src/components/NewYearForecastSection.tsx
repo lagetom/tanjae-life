@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { SEOLDAM_ASSETS } from '../constants/assets';
-import { MonthlyFlow2027, NewYearForecast2027 } from '../engine/annualFortune';
+import type { MonthlyFlow2027, NewYearForecast2027 } from '../types/saju';
 import { SeoldamImage } from './SeoldamImage';
 
 interface NewYearForecastSectionProps {

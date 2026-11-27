@@ -1,19 +1,19 @@
-import { generateAnnualReport } from './annualFortune';
-import { calculateAstrologyChart } from './astrology';
-import { ELEMENT_META } from './manseryeok';
+import { generateAnnualReport } from './annualFortune.ts';
+import { calculateAstrologyChart } from './astrology.ts';
+import { ELEMENT_META } from './manseryeok.ts';
 import {
   DAY_PILLAR_PROFILES,
   ELEMENT_HEALTH_GUIDE,
   GYEOKGUK_PROFILES,
-} from './sajuKnowledge';
-import {
+} from './sajuKnowledge.ts';
+import type {
   ElementBalanceItem,
   ElementType,
   ReadingReport,
   ReportChapter,
   SajuChart,
   TenGodGroup,
-} from './sajuTypes';
+} from '../../src/types/saju.ts';
 
 function getTenGodPercent(chart: SajuChart, group: TenGodGroup): number {
   return chart.tenGodGroups.find((g) => g.group === group)?.percentage ?? 0;

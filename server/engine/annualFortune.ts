@@ -1,4 +1,4 @@
-import { AstrologyChart, VEDIC_ELEMENT_META, VedicElement } from './astrology';
+import { VEDIC_ELEMENT_META } from './astrology.ts';
 import {
   BRANCHES,
   ELEMENT_META,
@@ -6,106 +6,32 @@ import {
   getLifeStage,
   getTenGod,
   getTenGodGroup,
-} from './manseryeok';
-import {
+} from './manseryeok.ts';
+import type {
+  AnnualReportBundle,
+  AstrologyChart,
   BranchInfo,
   ElementType,
+  MonthlyFlow2027,
+  MonthlyReview2026,
+  NewYearForecast2027,
   SajuChart,
   StemInfo,
   TenGod,
   TenGodGroup,
-} from './sajuTypes';
+  VedicElement,
+  YearEndReview2026,
+  YearPillarSummary,
+} from '../../src/types/saju.ts';
 
-export interface YearPillarSummary {
-  year: number;
-  ganjiHangul: string;
-  ganjiHanja: string;
-  nickname: string;
-  stem: StemInfo;
-  branch: BranchInfo;
-  stemTenGod: TenGod;
-  branchTenGod: TenGod;
-  lifeStage: string;
-  isYongsinYear: boolean;
-  isCheoneulYear: boolean;
-  interactionsWithChart: string[];
-}
-
-export interface MonthlyReview2026 {
-  month: number; // 1..12
-  solarTermLabel: string;
-  ganjiHangul: string;
-  ganjiHanja: string;
-  stemTenGod: TenGod;
-  branchTenGod: TenGod;
-  grade: '빛난 달' | '다진 달' | '버틴 달';
-  keyword: string;
-  retrospect: string;
-  reflectionQuestion: string;
-  seoldamNote: string;
-}
-
-export interface YearEndReview2026 {
-  pillar: YearPillarSummary;
-  headline: string;
-  summaryParagraphs: string[];
-  retrospectItems: {
-    label: string;
-    content: string;
-  }[];
-  monthlyReviews: MonthlyReview2026[];
-  brightMonths: number[];
-  toughMonths: number[];
-  astrologyRecap: string;
-  seoldamNote: {
-    tag: string;
-    quote: string;
-    footnote: string;
-  };
-}
-
-export interface MonthlyFlow2027 {
-  month: number; // 1..12
-  solarTermLabel: string;
-  ganjiHangul: string;
-  ganjiHanja: string;
-  stemTenGod: TenGod;
-  branchTenGod: TenGod;
-  grade: '호조' | '안정' | '점검';
-  keyword: string;
-  advice: string;
-  seoldamTip: string;
-}
-
-export interface NewYearForecast2027 {
-  pillar: YearPillarSummary;
-  headline: string;
-  overviewParagraphs: string[];
-  domainForecasts: {
-    id: 'career' | 'wealth' | 'romance' | 'health';
-    label: string;
-    theme: string;
-    detail: string;
-  }[];
-  monthlyFlows: MonthlyFlow2027[];
-  peakMonths: number[];
-  careMonths: number[];
-  astrologyTransit2027: {
-    headline: string;
-    firstHalf: string;
-    secondHalf: string;
-  };
-  seoldamNote: {
-    tag: string;
-    quote: string;
-    footnote: string;
-  };
-}
-
-export interface AnnualReportBundle {
-  review2026: YearEndReview2026;
-  forecast2027: NewYearForecast2027;
-}
+export type {
+  AnnualReportBundle,
+  MonthlyFlow2027,
+  MonthlyReview2026,
+  NewYearForecast2027,
+  YearEndReview2026,
+  YearPillarSummary,
+};
 
 // 천을귀인 지지 매핑 (일간 기준)
 const CHEONEUL_BRANCHES: Record<number, number[]> = {

@@ -1,6 +1,10 @@
-import { calculateSajuChart } from '../engine/manseryeok';
-import { RelationMember } from '../engine/sajuRelationship';
-import { BirthInput, ElementType, SajuChart } from '../engine/sajuTypes';
+import type {
+  BirthInput,
+  ChartLedgerSummary,
+  ElementType,
+  RelationMember,
+  SajuChart,
+} from '../types/saju';
 
 export const LEDGER_STORAGE_KEY = 'chasa-jae-ledger-v2';
 const LEGACY_STORAGE_KEY = 'chasa-jae-saju-state-v1';
@@ -108,11 +112,33 @@ export function formatChartShorthand(chart: SajuChart): string {
   return `${stems}${branches}`;
 }
 
-export function buildLedgerEntryFromBirth(input: BirthInput): LedgerEntry {
-  const chart = calculateSajuChart(input);
+export function buildLedgerEntryFromSummary(
+  input: BirthInput,
+  summary: ChartLedgerSummary
+): LedgerEntry {
+  return {
+    id: `ledger-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    name: summary.cleanName,
+    savedAt: new Date().toISOString(),
+    kind: 'birth',
+    birthInput: {
+      ...input,
+      name: summary.cleanName,
+    },
+    shorthand: summary.shorthand,
+    dayPillarCode: summary.dayPillarCode,
+    dayPillarHanja: summary.dayPillarHanja,
+    dayElement: summary.dayElement,
+    caption: summary.caption,
+  };
+}
+
+export function buildLedgerEntryFromChart(chart: SajuChart): LedgerEntry {
+  const input = chart.input;
   const shorthand = formatChartShorthand(chart);
   const cleanName = input.name.trim() || `${chart.dayPillarCode}일주`;
-  const calLabel = input.calendarType === 'lunar' ? (input.isLeapMonth ? '음력(윤)' : '음력') : '양력';
+  const calLabel =
+    input.calendarType === 'lunar' ? (input.isLeapMonth ? '음력(윤)' : '음력') : '양력';
   const datePart = `${calLabel} ${input.year}.${String(input.month).padStart(2, '0')}.${String(input.day).padStart(2, '0')}`;
   const timePart = input.unknownTime
     ? '시간 미상'

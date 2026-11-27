@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { ELEMENT_META } from '../engine/manseryeok';
-import { LIFE_STAGE_GLOSSARY, TEN_GOD_GLOSSARY } from '../engine/sajuKnowledge';
-import {
+import { ELEMENT_META } from '../constants/uiMeta';
+import type {
   InteractionItem,
   Pillar,
   SajuChart,
   SinsalItem,
   TermExplanation,
-} from '../engine/sajuTypes';
+} from '../types/saju';
 
 interface SajuChartSectionProps {
   chart: SajuChart;
@@ -34,18 +33,18 @@ export function SajuChartSection({ chart }: SajuChartSectionProps) {
       return;
     }
     setSelectedPillarPos(pillar.position);
-    const stemTG = TEN_GOD_GLOSSARY[pillar.stemTenGod];
-    const branchTG = TEN_GOD_GLOSSARY[pillar.branchTenGod];
-    const stageDesc = LIFE_STAGE_GLOSSARY[pillar.lifeStage] ?? '';
+    if (pillar.explanation) {
+      setSelectedTerm(pillar.explanation);
+      return;
+    }
     const hiddenText = pillar.hiddenStems
       .map((h) => `${h.stem.hangul}(${h.stem.hanja} · ${h.tenGod})`)
       .join(', ');
-
     setSelectedTerm({
       title: `${pillar.label} — ${pillar.ganjiHangul}(${pillar.ganjiHanja})`,
       subtitle: `${roleDesc} · 12운성 ${pillar.lifeStage}`,
       roleInChart: `천간 ${pillar.stem.hangul}(${pillar.stem.hanja}, ${pillar.stemTenGod}) · 지지 ${pillar.branch.hangul}(${pillar.branch.hanja}, ${pillar.branchTenGod}) · 지장간 ${hiddenText}`,
-      description: `천간 '${pillar.stem.hangul}(${pillar.stem.hanja})'은 ${pillar.stem.natureTitle}의 기운으로 이 명식에서 '${pillar.stemTenGod}'(${stemTG.summary}) 역할을 맡습니다. 지지 '${pillar.branch.hangul}(${pillar.branch.hanja})'는 '${pillar.branchTenGod}'(${branchTG.summary})의 뿌리를 이루며, 12운성 '${pillar.lifeStage}'에 해당합니다. ${stageDesc}`,
+      description: `천간 '${pillar.stem.hangul}(${pillar.stem.hanja})'과 지지 '${pillar.branch.hangul}(${pillar.branch.hanja})'가 결합한 기둥입니다.`,
     });
   };
 

@@ -1,4 +1,4 @@
-import { SeoldamMood } from '../engine/sajuTypes';
+import type { SeoldamMood } from '../types/saju';
 
 export const SEOLDAM_ASSETS = {
   heroPortrait: '/src/assets/images/seoldam_reaper_hero_1795739833734.jpg',

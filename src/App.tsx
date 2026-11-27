@@ -7,24 +7,29 @@ import { useEffect, useMemo, useState } from 'react';
 import { BokchaeModal } from './components/BokchaeModal';
 import { HeroInputView } from './components/HeroInputView';
 import { RelationshipView } from './components/RelationshipView';
-import { REPORT_PAGES, ReportPageId, ReportView } from './components/ReportView';
+import { REPORT_PAGES, type ReportPageId, ReportView } from './components/ReportView';
 import { TopBar } from './components/TopBar';
-import { calculateSajuChart } from './engine/manseryeok';
-import { generateReadingReport } from './engine/reportGenerator';
-import { PRESET_PROFILES } from './engine/sajuKnowledge';
-import {
+import { PRESET_PROFILES } from './constants/uiMeta';
+import type {
+  BirthInput,
+  GroupChemistryReport,
+  PresetProfile,
+  ReadingReport,
   RelationMember,
-  createMemberFromBirthInput,
-  createMemberFromCode,
-  createMemberFromSajuChart,
-} from './engine/sajuRelationship';
-import { BirthInput, PresetProfile, ReadingReport } from './engine/sajuTypes';
+} from './types/saju';
 import {
-  AppMode,
+  fetchChartSummary,
+  fetchReadingReport,
+  fetchRelationshipAction,
+  toMemberSeeds,
+} from './utils/api';
+import {
+  type AppMode,
   DEFAULT_BIRTH_INPUT,
-  LedgerEntry,
-  buildLedgerEntryFromBirth,
+  type LedgerEntry,
+  buildLedgerEntryFromChart,
   buildLedgerEntryFromMember,
+  buildLedgerEntryFromSummary,
   clearLedgerEntries,
   formatChartShorthand,
   isEntryInLedger,
@@ -33,23 +38,21 @@ import {
   upsertLedgerEntry,
 } from './utils/storage';
 
-function ledgerEntryToRelationMember(entry: LedgerEntry): RelationMember | null {
-  if (entry.kind === 'birth' && entry.birthInput) {
-    const res = createMemberFromBirthInput(`ledger-${entry.id}`, entry.birthInput);
-    if (res.ok) return res.member;
-  }
-  const res = createMemberFromCode(`ledger-${entry.id}`, entry.name, entry.shorthand, 'hour-first');
-  return res.ok ? res.member : null;
-}
-
 export default function App() {
   // Always start fresh on page reload; only the user's explicit 명부(ledger) persists in localStorage
   const [mode, setMode] = useState<AppMode>('input');
   const [birthInput, setBirthInput] = useState<BirthInput>(DEFAULT_BIRTH_INPUT);
   const [formSyncVersion, setFormSyncVersion] = useState(0);
   const [report, setReport] = useState<ReadingReport | null>(null);
+  const [selfMember, setSelfMember] = useState<RelationMember | null>(null);
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
+
   const [relationMembers, setRelationMembers] = useState<RelationMember[]>([]);
+  const [groupReport, setGroupReport] = useState<GroupChemistryReport | null>(null);
+  const [isRelationBusy, setIsRelationBusy] = useState(false);
   const [hasSyncedSelfOnce, setHasSyncedSelfOnce] = useState(false);
+
   const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>(() => loadLedgerEntries());
   const [bokchaeOpen, setBokchaeOpen] = useState(false);
   const [activeReportPage, setActiveReportPage] = useState<ReportPageId>('won-guk');
@@ -61,23 +64,44 @@ export default function App() {
     saveLedgerEntries(next);
   };
 
-  const runAnalysis = (input: BirthInput) => {
-    const chart = calculateSajuChart(input);
-    const generated = generateReadingReport(chart);
-    setBirthInput(input);
-    setFormSyncVersion((v) => v + 1);
-    setReport(generated);
-    setHasSyncedSelfOnce(false);
-    setMode('report');
-    setActiveReportPage('won-guk');
-    setActiveSection('won-guk');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handleUpdateRelationState = (
+    nextMembers: RelationMember[],
+    nextGroupReport: GroupChemistryReport | null
+  ) => {
+    setRelationMembers(nextMembers);
+    setGroupReport(nextGroupReport);
   };
 
-  const handleSaveBirthToLedger = (
+  const runAnalysis = async (input: BirthInput) => {
+    setIsSubmittingReport(true);
+    setReportError(null);
+    try {
+      const { report: generated, selfMember: resolvedSelf } = await fetchReadingReport(input);
+      setBirthInput(input);
+      setFormSyncVersion((v) => v + 1);
+      setReport(generated);
+      setSelfMember(resolvedSelf);
+      setHasSyncedSelfOnce(false);
+      setMode('report');
+      setActiveReportPage('won-guk');
+      setActiveSection('won-guk');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      setReportError(
+        err instanceof Error
+          ? err.message
+          : '리포트를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'
+      );
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  };
+
+  const handleSaveBirthToLedger = async (
     input: BirthInput
-  ): { entry: LedgerEntry; updatedExisting: boolean } => {
-    const entry = buildLedgerEntryFromBirth(input);
+  ): Promise<{ entry: LedgerEntry; updatedExisting: boolean }> => {
+    const summary = await fetchChartSummary(input);
+    const entry = buildLedgerEntryFromSummary(input, summary);
     const { next, updatedExisting } = upsertLedgerEntry(ledgerEntries, entry);
     persistLedger(next);
     return { entry, updatedExisting };
@@ -85,7 +109,9 @@ export default function App() {
 
   const handleSaveCurrentReportToLedger = () => {
     if (!report) return;
-    handleSaveBirthToLedger(report.chart.input);
+    const entry = buildLedgerEntryFromChart(report.chart);
+    const { next } = upsertLedgerEntry(ledgerEntries, entry);
+    persistLedger(next);
   };
 
   const handleSaveMemberToLedger = (member: RelationMember) => {
@@ -104,25 +130,39 @@ export default function App() {
     setLedgerEntries([]);
   };
 
-  const handleOpenLedgerEntry = (entry: LedgerEntry) => {
+  const handleOpenLedgerEntry = async (entry: LedgerEntry) => {
     if (entry.kind === 'birth' && entry.birthInput) {
-      runAnalysis(entry.birthInput);
+      await runAnalysis(entry.birthInput);
       return;
     }
-    const member = ledgerEntryToRelationMember(entry);
-    if (!member) return;
-    setRelationMembers((prev) => {
-      const base = prev.every((m) => m.isSample) ? [] : prev;
-      const already = base.some(
-        (m) => m.name === member.name && m.shorthand === member.shorthand
-      );
-      if (already) return base;
-      return [...base, member].slice(0, 8);
-    });
+
+    const base = relationMembers.every((m) => m.isSample) ? [] : relationMembers;
     setMode('relation');
     setActiveSection('rel-members');
     setScrollProgress(0);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    setIsRelationBusy(true);
+    try {
+      const res = await fetchRelationshipAction({
+        action: 'from-ledger',
+        entries: [
+          {
+            id: entry.id,
+            name: entry.name,
+            kind: entry.kind,
+            shorthand: entry.shorthand,
+            birthInput: entry.birthInput,
+          },
+        ],
+        existingMembers: toMemberSeeds(base),
+      });
+      if (res.ok) {
+        handleUpdateRelationState(res.members, res.groupReport);
+      }
+    } finally {
+      setIsRelationBusy(false);
+    }
   };
 
   const handleFillFormFromLedger = (entry: LedgerEntry) => {
@@ -137,26 +177,40 @@ export default function App() {
     }
   };
 
-  const handleOpenLedgerInRelation = () => {
-    const converted: RelationMember[] = [];
-    for (const entry of ledgerEntries.slice(0, 8)) {
-      const m = ledgerEntryToRelationMember(entry);
-      if (m) converted.push(m);
-    }
-    setRelationMembers(converted);
+  const handleOpenLedgerInRelation = async () => {
     setHasSyncedSelfOnce(true);
     setMode('relation');
     setActiveSection('rel-members');
     setScrollProgress(0);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    setIsRelationBusy(true);
+    try {
+      const res = await fetchRelationshipAction({
+        action: 'from-ledger',
+        entries: ledgerEntries.slice(0, 8).map((entry) => ({
+          id: entry.id,
+          name: entry.name,
+          kind: entry.kind,
+          shorthand: entry.shorthand,
+          birthInput: entry.birthInput,
+        })),
+        existingMembers: [],
+      });
+      if (res.ok) {
+        handleUpdateRelationState(res.members, res.groupReport);
+      }
+    } finally {
+      setIsRelationBusy(false);
+    }
   };
 
   const handleSelectPreset = (preset: PresetProfile) => {
-    runAnalysis(preset.input);
+    void runAnalysis(preset.input);
   };
 
   const handleLoadDefaultPreset = () => {
-    runAnalysis(PRESET_PROFILES[0].input);
+    void runAnalysis(PRESET_PROFILES[0].input);
   };
 
   const handleResetToInput = () => {
@@ -166,23 +220,38 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleOpenRelation = () => {
-    if (report && !hasSyncedSelfOnce) {
-      const selfMember = createMemberFromSajuChart(report.chart);
-      setRelationMembers((prev) => {
-        const isSampleOnly = prev.length > 0 && prev.every((m) => m.isSample);
-        if (isSampleOnly) {
-          return [selfMember];
-        }
-        const withoutOldSelf = prev.filter((m) => m.id !== 'my-report-self');
-        return [selfMember, ...withoutOldSelf].slice(0, 8);
-      });
-      setHasSyncedSelfOnce(true);
-    }
+  const handleOpenRelation = async () => {
     setMode('relation');
     setActiveSection('rel-members');
     setScrollProgress(0);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (selfMember && !hasSyncedSelfOnce) {
+      setHasSyncedSelfOnce(true);
+      const isSampleOnly = relationMembers.length > 0 && relationMembers.every((m) => m.isSample);
+      const withoutOldSelf = isSampleOnly
+        ? []
+        : relationMembers.filter((m) => m.id !== 'my-report-self');
+      const nextList = [selfMember, ...withoutOldSelf].slice(0, 8);
+
+      if (nextList.length < 2) {
+        handleUpdateRelationState(nextList, null);
+        return;
+      }
+
+      setIsRelationBusy(true);
+      try {
+        const res = await fetchRelationshipAction({
+          action: 'analyze',
+          members: toMemberSeeds(nextList),
+        });
+        if (res.ok) {
+          handleUpdateRelationState(res.members, res.groupReport);
+        }
+      } finally {
+        setIsRelationBusy(false);
+      }
+    }
   };
 
   const handleReturnToReport = () => {
@@ -282,10 +351,14 @@ export default function App() {
       <div id="main-content" tabIndex={-1} className="outline-none">
         {mode === 'relation' ? (
           <RelationshipView
-            myChart={report?.chart ?? null}
+            hasPersonalReport={Boolean(report)}
+            selfMember={selfMember}
             members={relationMembers}
+            groupReport={groupReport}
+            isBusy={isRelationBusy}
             ledgerEntries={ledgerEntries}
-            onChangeMembers={setRelationMembers}
+            onUpdateRelationState={handleUpdateRelationState}
+            onSetBusy={setIsRelationBusy}
             onSaveMemberToLedger={handleSaveMemberToLedger}
             onClearLedger={handleClearLedger}
             onBackToPersonal={handleReturnToReport}
@@ -307,6 +380,8 @@ export default function App() {
             initialInput={birthInput}
             formSyncVersion={formSyncVersion}
             ledgerEntries={ledgerEntries}
+            isSubmitting={isSubmittingReport}
+            serverError={reportError}
             onSubmit={runAnalysis}
             onSaveToLedger={handleSaveBirthToLedger}
             onOpenLedgerEntry={handleOpenLedgerEntry}

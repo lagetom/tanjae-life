@@ -1,11 +1,10 @@
 import { KeyboardEvent } from 'react';
-import {
+import { VEDIC_ELEMENT_META } from '../constants/uiMeta';
+import type {
   AstrologyChart,
   GrahaId,
   GrahaPlacement,
-  VEDIC_ELEMENT_META,
-  VEDIC_RASHIS,
-} from '../engine/astrology';
+} from '../types/saju';
 
 interface VedicKundaliSvgProps {
   astrology: AstrologyChart;
@@ -116,7 +115,7 @@ export function VedicKundaliSvg({
       {/* House Rashi Numbers & Graha Labels */}
       {NORTH_INDIAN_HOUSES.map((geom) => {
         const rashiIdx = (astrology.baseRashiIndex + geom.house - 1) % 12;
-        const rashi = VEDIC_RASHIS[rashiIdx];
+        const rashiNumber = rashiIdx + 1;
         const houseGrahas = byHouse.get(geom.house) ?? [];
         const isDiamond = geom.house === 1 || geom.house === 4 || geom.house === 7 || geom.house === 10;
 
@@ -131,7 +130,7 @@ export function VedicKundaliSvg({
               fontFamily="IBM Plex Mono, Noto Sans KR, monospace"
               fill="#767676"
             >
-              {rashi.number}
+              {rashiNumber}
             </text>
 
             {/* Graha items placed neatly inside each house */}

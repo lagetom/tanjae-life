@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { SEOLDAM_ASSETS } from '../constants/assets';
-import { ReadingReport } from '../engine/sajuTypes';
+import type { ReadingReport } from '../types/saju';
 import { AstrologySection } from './AstrologySection';
 import { InnateChaptersTabs } from './InnateChaptersTabs';
 import { NewYearForecastSection } from './NewYearForecastSection';

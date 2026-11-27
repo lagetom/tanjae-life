@@ -11,47 +11,35 @@ import {
   getLifeStage,
   getTenGod,
   getTenGodGroup,
-} from './manseryeok';
-import { DAY_PILLAR_PROFILES } from './sajuKnowledge';
-import {
+} from './manseryeok.ts';
+import { DAY_PILLAR_PROFILES } from './sajuKnowledge.ts';
+import type {
   BirthInput,
-  BranchInfo,
   ElementBalanceItem,
   ElementType,
+  GroupChemistryReport,
+  GroupSamhapMatch,
+  PairCompatibility,
+  PairSignal,
   Pillar,
+  PillarOrderMode,
+  RelationMember,
   SajuChart,
   SeoldamMood,
   StemInfo,
   StrengthGrade,
   TenGod,
   TenGodGroup,
-} from './sajuTypes';
+} from '../../src/types/saju.ts';
 
-export type PillarOrderMode = 'hour-first' | 'year-first';
-
-export interface RelationMember {
-  id: string;
-  name: string;
-  source: 'manual' | 'birth' | 'my-report';
-  isSample?: boolean;
-  shorthand: string; // Always normalized as 8-char (or 6-char) 시일월년 (e.g. '계병무경사술자술' or '병무경술자술')
-  pillars: {
-    hour: Pillar | null;
-    day: Pillar;
-    month: Pillar;
-    year: Pillar;
-  };
-  dayMaster: StemInfo;
-  dayPillarCode: string;
-  dayPillarTitle: string;
-  elementBalance: ElementBalanceItem[];
-  dominantElement: ElementType;
-  weakestElement: ElementType;
-  strengthGrade: StrengthGrade;
-  strengthScore: number;
-  yongsinPrimary: ElementType;
-  yongsinSecondary: ElementType;
-}
+export type {
+  GroupChemistryReport,
+  GroupSamhapMatch,
+  PairCompatibility,
+  PairSignal,
+  PillarOrderMode,
+  RelationMember,
+};
 
 export interface ParsedPillarRaw {
   hour: { stemIdx: number; branchIdx: number } | null;
@@ -63,72 +51,6 @@ export interface ParsedPillarRaw {
 export type ParseCodeResult =
   | { ok: true; raw: ParsedPillarRaw; normalizedCode: string }
   | { ok: false; error: string };
-
-export interface PairSignal {
-  id: string;
-  category: '천간' | '일지' | '지지' | '귀인' | '오행';
-  polarity: 'harmony' | 'tension' | 'neutral';
-  label: string;
-  detail: string;
-}
-
-export interface PairCompatibility {
-  pairKey: string;
-  a: RelationMember;
-  b: RelationMember;
-  score: number; // 35 ~ 98, strictly deterministic from Saju rules
-  relationTier: '천생 호흡' | '상호 보완' | '티키타카 자극' | '조율 필요';
-  relationTitle: string;
-  shortKeyword: string;
-  aToB: {
-    tenGod: TenGod;
-    group: TenGodGroup;
-    roleLabel: string;
-    description: string;
-  };
-  bToA: {
-    tenGod: TenGod;
-    group: TenGodGroup;
-    roleLabel: string;
-    description: string;
-  };
-  signals: PairSignal[];
-  harmonyPoints: string[];
-  cautionPoints: string[];
-  elementComplementSummary: string;
-  year2027JointNote: string;
-  seoldamNote: {
-    mood: SeoldamMood;
-    quote: string;
-    tip: string;
-  };
-}
-
-export interface GroupSamhapMatch {
-  id: string;
-  type: '삼합' | '방합';
-  name: string;
-  element: ElementType;
-  contributors: { memberName: string; branchHangul: string; branchHanja: string }[];
-  meaning: string;
-}
-
-export interface GroupChemistryReport {
-  members: RelationMember[];
-  pairs: PairCompatibility[];
-  pairMap: Record<string, PairCompatibility>;
-  collectiveElements: ElementBalanceItem[];
-  strongestGroupElement: ElementType;
-  weakestGroupElement: ElementType;
-  groupTemperamentTitle: string;
-  groupTemperamentSummary: string;
-  bestPair: PairCompatibility | null;
-  tensionPair: PairCompatibility | null;
-  mediator: { member: RelationMember; avgScore: number; reason: string } | null;
-  balancer: { member: RelationMember; element: ElementType; reason: string } | null;
-  groupSamhaps: GroupSamhapMatch[];
-  seoldamGroupSummary: string;
-}
 
 const STEM_CHAR_MAP = new Map<string, number>();
 STEMS.forEach((s) => {
