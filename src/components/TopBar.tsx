@@ -80,32 +80,24 @@ export function TopBar({
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-[#E5E5E5] no-print">
       <div className="max-w-[1200px] mx-auto px-4 sm:px-8 h-14 sm:h-16 flex items-center justify-between gap-4 sm:gap-8">
-        {/* Zone 1: Creator home icon + divider + brand wordmark */}
-        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-          <a
-            href="https://tanjae.pages.dev"
-            aria-label="타고 남은 재 홈으로"
-            title="타고 남은 재 홈으로"
-            className="min-h-[40px] min-w-[32px] -ml-1 inline-flex items-center justify-center text-[#595959] hover:text-[#141414] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#141414] transition-colors shrink-0"
-          >
-            <House className="w-4 h-4" aria-hidden="true" />
-          </a>
-          <span aria-hidden="true" className="h-3.5 w-px bg-[#E5E5E5] shrink-0" />
-          <button
-            type="button"
-            onClick={() => {
-              setMobileMenuOpen(false);
-              if (mode === 'report') {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              } else {
-                onResetToInput();
-              }
-            }}
-            className="font-editorial text-base sm:text-lg font-bold tracking-tight text-[#141414] whitespace-nowrap shrink-0 cursor-pointer hover:opacity-75 transition-opacity min-h-[44px] inline-flex items-center"
-          >
-            차사 재(災) 명리
-          </button>
-        </div>
+        {/* Zone 1: 災 animated icon + brand wordmark grouped as one button */}
+        <button
+          type="button"
+          onClick={() => {
+            setMobileMenuOpen(false);
+            onResetToInput();
+          }}
+          className="inline-flex items-center gap-2 font-editorial text-base sm:text-lg font-bold tracking-tight text-[#141414] whitespace-nowrap shrink-0 cursor-pointer hover:opacity-75 transition-opacity min-h-[44px]"
+        >
+          <img
+            src="/favicon.svg"
+            alt=""
+            width={26}
+            height={26}
+            className="w-[26px] h-[26px] shrink-0"
+          />
+          <span>차사 재(災) 명리</span>
+        </button>
 
         {/* Zone 2: 4–5 single-line text nav links (Desktop) */}
         <nav
@@ -132,7 +124,7 @@ export function TopBar({
           })}
         </nav>
 
-        {/* Zone 3: 1 primary CTA action (+ mobile menu drawer toggle on < md) */}
+        {/* Zone 3: Primary CTA + Bokchae + Creator Home square button (+ mobile menu toggle) */}
         <div className="flex items-center gap-2 shrink-0">
           {mode === 'report' ? (
             <button
@@ -141,7 +133,7 @@ export function TopBar({
                 setMobileMenuOpen(false);
                 onResetToInput();
               }}
-              className="min-h-[40px] sm:min-h-0 px-3.5 sm:px-4 py-2 text-xs font-medium text-white bg-[#141414] rounded-md hover:bg-[#2E2E2E] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              className="h-[40px] sm:h-[34px] px-3.5 sm:px-4 text-xs font-medium text-white bg-[#141414] rounded-md hover:bg-[#2E2E2E] transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center justify-center"
             >
               새 사주 풀이
             </button>
@@ -156,7 +148,7 @@ export function TopBar({
                   onResetToInput();
                 }
               }}
-              className="min-h-[40px] sm:min-h-0 px-3.5 sm:px-4 py-2 text-xs font-medium text-white bg-[#141414] rounded-md hover:bg-[#2E2E2E] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              className="h-[40px] sm:h-[34px] px-3.5 sm:px-4 text-xs font-medium text-white bg-[#141414] rounded-md hover:bg-[#2E2E2E] transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center justify-center"
             >
               {hasPersonalReport ? '내 리포트 보기' : '개인 사주 풀이'}
             </button>
@@ -167,7 +159,7 @@ export function TopBar({
                 setMobileMenuOpen(false);
                 onLoadDefaultPreset();
               }}
-              className="min-h-[40px] sm:min-h-0 px-3.5 sm:px-4 py-2 text-xs font-medium text-white bg-[#141414] rounded-md hover:bg-[#2E2E2E] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              className="h-[40px] sm:h-[34px] px-3.5 sm:px-4 text-xs font-medium text-white bg-[#141414] rounded-md hover:bg-[#2E2E2E] transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center justify-center"
             >
               예시 리포트
             </button>
@@ -179,11 +171,20 @@ export function TopBar({
               setMobileMenuOpen(false);
               onOpenBokchae();
             }}
-            className="min-h-[40px] sm:min-h-0 inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 text-xs font-medium text-[#141414] bg-white border border-[#D4D4D4] rounded-md hover:border-[#141414] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            className="h-[40px] sm:h-[34px] inline-flex items-center justify-center gap-1.5 px-3 sm:px-3.5 text-xs font-medium text-[#141414] bg-white border border-[#D4D4D4] rounded-md hover:border-[#141414] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
           >
             <Coffee className="w-3.5 h-3.5" />
             <span>복채</span>
           </button>
+
+          <a
+            href="https://tanjae.pages.dev"
+            aria-label="만든 사람: 타고 남은 재 홈"
+            title="만든 사람: 타고 남은 재 홈"
+            className="h-[40px] w-[40px] sm:h-[34px] sm:w-[34px] inline-flex items-center justify-center text-[#595959] bg-white border border-[#D4D4D4] rounded-md hover:text-[#141414] hover:border-[#141414] transition-colors shrink-0"
+          >
+            <House className="w-4 h-4" aria-hidden="true" />
+          </a>
 
           <button
             type="button"
@@ -191,7 +192,7 @@ export function TopBar({
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-nav-drawer"
             aria-label={mobileMenuOpen ? '섹션 메뉴 닫기' : '섹션 메뉴 열기'}
-            className="md:hidden min-h-[44px] min-w-[44px] inline-flex items-center justify-center text-[#141414] border border-[#E5E5E5] rounded-md hover:border-[#141414] transition-colors cursor-pointer"
+            className="md:hidden h-[40px] w-[40px] inline-flex items-center justify-center text-[#141414] border border-[#E5E5E5] rounded-md hover:border-[#141414] transition-colors cursor-pointer shrink-0"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>

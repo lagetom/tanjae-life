@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   BookMarked,
   Check,
@@ -6,8 +6,8 @@ import {
   ChevronRight,
   Coffee,
   Copy,
-  Printer,
   RotateCcw,
+  Share2,
   Users,
 } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -18,6 +18,7 @@ import { InnateChaptersTabs } from './InnateChaptersTabs';
 import { NewYearForecastSection } from './NewYearForecastSection';
 import { SajuChartSection } from './SajuChartSection';
 import { SeoldamImage } from './SeoldamImage';
+import { ShareCardModal } from './ShareCardModal';
 import { YearEndReviewSection } from './YearEndReviewSection';
 
 export type ReportPageId =
@@ -64,7 +65,7 @@ export function ReportView({
   onOpenBokchae,
 }: ReportViewProps) {
   const [copied, setCopied] = useState(false);
-  const [isPrintingAll, setIsPrintingAll] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const { chart, astrology } = report;
 
   const pageIndex = Math.max(
@@ -73,20 +74,6 @@ export function ReportView({
   );
   const prevPage = pageIndex > 0 ? REPORT_PAGES[pageIndex - 1] : null;
   const nextPage = pageIndex < REPORT_PAGES.length - 1 ? REPORT_PAGES[pageIndex + 1] : null;
-
-  useEffect(() => {
-    const handleAfterPrint = () => setIsPrintingAll(false);
-    window.addEventListener('afterprint', handleAfterPrint);
-    return () => window.removeEventListener('afterprint', handleAfterPrint);
-  }, []);
-
-  useEffect(() => {
-    if (!isPrintingAll) return;
-    const timer = window.setTimeout(() => {
-      window.print();
-    }, 60);
-    return () => window.clearTimeout(timer);
-  }, [isPrintingAll]);
 
   const solarStr = `${chart.solarDate.year}.${String(chart.solarDate.month).padStart(2, '0')}.${String(chart.solarDate.day).padStart(2, '0')}`;
   const lunarStr = `${chart.lunarDate.year}.${String(chart.lunarDate.month).padStart(2, '0')}.${String(chart.lunarDate.day).padStart(2, '0')}${chart.lunarDate.isLeap ? '(윤)' : ''}`;
@@ -127,16 +114,12 @@ export function ReportView({
     }
   };
 
-  const handlePrint = () => {
-    setIsPrintingAll(true);
-  };
-
   const handleFlipPage = (page: ReportPageId) => {
     onChangePage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const shouldRender = (id: ReportPageId) => isPrintingAll || activePage === id;
+  const shouldRender = (id: ReportPageId) => activePage === id;
 
   return (
     <main className="bg-white">
@@ -203,11 +186,11 @@ export function ReportView({
               </button>
               <button
                 type="button"
-                onClick={handlePrint}
+                onClick={() => setShareModalOpen(true)}
                 className="min-h-[44px] sm:min-h-[36px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-[#141414] bg-white border border-[#D4D4D4] rounded-md hover:border-[#141414] transition-colors cursor-pointer whitespace-nowrap"
               >
-                <Printer className="w-3.5 h-3.5" />
-                <span>전체 인쇄</span>
+                <Share2 className="w-3.5 h-3.5" />
+                <span>공유 카드</span>
               </button>
               <button
                 type="button"
@@ -255,9 +238,9 @@ export function ReportView({
           </nav>
         </header>
 
-        {/* Active Chapter Body (Mounts only active page on screen; all pages during print) */}
+        {/* Active Chapter Body */}
         <motion.div
-          key={isPrintingAll ? 'print-all' : activePage}
+          key={activePage}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
@@ -383,6 +366,14 @@ export function ReportView({
                   <div className="mt-6 w-full space-y-2.5 no-print">
                     <button
                       type="button"
+                      onClick={() => setShareModalOpen(true)}
+                      className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-medium text-[#141414] bg-white border border-[#141414] rounded-md hover:bg-[#141414] hover:text-white transition-colors cursor-pointer"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                      <span>공유 카드</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={onOpenRelation}
                       className="w-full min-h-[44px] px-4 py-2.5 text-xs font-medium text-white bg-[#141414] rounded-md hover:bg-[#2E2E2E] transition-colors cursor-pointer"
                     >
@@ -480,6 +471,12 @@ export function ReportView({
           </p>
         </footer>
       </article>
+
+      <ShareCardModal
+        open={shareModalOpen}
+        report={report}
+        onClose={() => setShareModalOpen(false)}
+      />
     </main>
   );
 }
