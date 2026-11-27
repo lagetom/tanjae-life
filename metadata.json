@@ -1,0 +1,6 @@
+{
+  "name": "설담 명리 리포트",
+  "description": "정확한 24절기 만세력과 서양 점성술 천궁도로 2026 병오년 연말결산, 2027 정미년 신년사주와 12개월 월운, 타고난 5대 기질을 풀어내는 미니멀 화이트 리포트 웹앱",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
