@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { ArrowUpRight, House, X } from 'lucide-react';
 import { SEOLDAM_ASSETS } from '../constants/assets';
-import { BOKCHAE_CONFIG, BOKCHAE_ITEMS } from '../constants/bokchae';
+import { BOKCHAE_CONFIG, BOKCHAE_ITEMS, BOKCHAE_SHOP_CTA } from '../constants/bokchae';
 import { SeoldamImage } from './SeoldamImage';
 
 interface BokchaeModalProps {
@@ -94,10 +94,10 @@ export function BokchaeModal({ open, onClose }: BokchaeModalProps) {
                 <a
                   href={item.url}
                   target="_blank"
-                  rel="noopener noreferrer sponsored"
+                  rel="sponsored noopener noreferrer"
                   className="w-full min-h-[40px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-medium text-white bg-[#141414] hover:bg-[#2E2E2E] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#141414] transition-colors whitespace-nowrap shrink-0"
                 >
-                  <span>{BOKCHAE_CONFIG.itemCtaLabel}</span>
+                  <span>{BOKCHAE_SHOP_CTA[item.shop]}</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
                 </a>
               )}
@@ -105,14 +105,18 @@ export function BokchaeModal({ open, onClose }: BokchaeModalProps) {
           ))}
         </div>
 
-        {/* Path Guidance + Mandatory FTC Disclosure */}
+        {/* Path Guidance + Mandatory FTC Disclosures */}
         <div className="mt-4 space-y-1.5">
           <p className="font-editorial text-[13.5px] leading-[1.7] text-[#262626]">
             {BOKCHAE_CONFIG.quote}
           </p>
-          <p className="text-[11.5px] font-medium text-[#595959] leading-relaxed">
-            {BOKCHAE_CONFIG.ftcNotice}
-          </p>
+          <div className="space-y-0.5">
+            {BOKCHAE_CONFIG.ftcNotices.map((notice) => (
+              <p key={notice} className="text-[11.5px] font-medium text-[#595959] leading-relaxed">
+                {notice}
+              </p>
+            ))}
+          </div>
         </div>
 
         {/* Creator Home Link (New Tab) */}
