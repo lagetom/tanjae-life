@@ -457,9 +457,27 @@ export function ReportView({
         </nav>
 
         {/* Quiet Editorial Footer */}
-        <footer className="mt-12 pt-8 border-t border-[#EBEBEB] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#6E6E6E]">
-          <span>저승차사 재(災) 명리 리포트 · 자기 이해와 흥미를 위한 참고용 풀이</span>
-          <span>명부에 기록해 두시면 새로고침 후에도 보관 명부에서 언제든 다시 꺼내 볼 수 있습니다.</span>
+        <footer className="mt-12 pt-8 border-t border-[#EBEBEB] space-y-2.5 text-xs text-[#6E6E6E]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <span>저승차사 재(災) 명리 리포트 · 자기 이해와 흥미를 위한 참고용 풀이</span>
+            <span>명부에 기록해 두시면 새로고침 후에도 보관 명부에서 언제든 다시 꺼내 볼 수 있습니다.</span>
+          </div>
+          <p>
+            © 2026{' '}
+            <a
+              href="https://tanjae.pages.dev"
+              className="hover:text-[#141414] underline-offset-2 hover:underline transition-colors"
+            >
+              타고 남은 재
+            </a>
+            . All rights reserved. 무단 복제·재배포 금지 ·{' '}
+            <a
+              href="/LICENSE.txt"
+              className="hover:text-[#141414] underline-offset-2 hover:underline transition-colors"
+            >
+              이용 안내
+            </a>
+          </p>
         </footer>
       </article>
     </main>

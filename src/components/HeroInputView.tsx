@@ -838,6 +838,25 @@ export function HeroInputView({
           </div>
         </div>
       </section>
+
+      <footer className="border-t border-[#EBEBEB] bg-white">
+        <div className="max-w-[1200px] mx-auto px-6 sm:px-8 py-6 text-xs text-[#6E6E6E]">
+          © 2026{' '}
+          <a
+            href="https://tanjae.pages.dev"
+            className="hover:text-[#141414] underline-offset-2 hover:underline transition-colors"
+          >
+            타고 남은 재
+          </a>
+          . All rights reserved. 무단 복제·재배포 금지 ·{' '}
+          <a
+            href="/LICENSE.txt"
+            className="hover:text-[#141414] underline-offset-2 hover:underline transition-colors"
+          >
+            이용 안내
+          </a>
+        </div>
+      </footer>
     </main>
   );
 }

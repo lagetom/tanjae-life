@@ -1694,9 +1694,27 @@ export function RelationshipView({
         )}
 
         {/* Quiet Editorial Footer */}
-        <footer className="mt-16 pt-8 border-t border-[#EBEBEB] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#6E6E6E]">
-          <span>저승차사 재(災) 명리 리포트 · 순수 명리 원국 기반 참고용 다자 사주 관계도</span>
-          <span>명부에 기록한 만세력만 현재 브라우저에 보관되며 외부로 전송되지 않습니다.</span>
+        <footer className="mt-16 pt-8 border-t border-[#EBEBEB] space-y-2.5 text-xs text-[#6E6E6E]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <span>저승차사 재(災) 명리 리포트 · 순수 명리 원국 기반 참고용 다자 사주 관계도</span>
+            <span>명부에 기록한 만세력만 현재 브라우저에 보관되며 외부로 전송되지 않습니다.</span>
+          </div>
+          <p>
+            © 2026{' '}
+            <a
+              href="https://tanjae.pages.dev"
+              className="hover:text-[#141414] underline-offset-2 hover:underline transition-colors"
+            >
+              타고 남은 재
+            </a>
+            . All rights reserved. 무단 복제·재배포 금지 ·{' '}
+            <a
+              href="/LICENSE.txt"
+              className="hover:text-[#141414] underline-offset-2 hover:underline transition-colors"
+            >
+              이용 안내
+            </a>
+          </p>
         </footer>
       </div>
     </motion.main>

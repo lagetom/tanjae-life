@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Coffee, Menu, X } from 'lucide-react';
+import { Coffee, House, Menu, X } from 'lucide-react';
 
 interface TopBarProps {
   mode: 'input' | 'report' | 'relation';
@@ -80,21 +80,32 @@ export function TopBar({
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-[#E5E5E5] no-print">
       <div className="max-w-[1200px] mx-auto px-4 sm:px-8 h-14 sm:h-16 flex items-center justify-between gap-4 sm:gap-8">
-        {/* Zone 1: Single text element wordmark */}
-        <button
-          type="button"
-          onClick={() => {
-            setMobileMenuOpen(false);
-            if (mode === 'report') {
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            } else {
-              onResetToInput();
-            }
-          }}
-          className="font-editorial text-base sm:text-lg font-bold tracking-tight text-[#141414] whitespace-nowrap shrink-0 cursor-pointer hover:opacity-75 transition-opacity min-h-[44px] inline-flex items-center"
-        >
-          차사 재(災) 명리
-        </button>
+        {/* Zone 1: Creator home icon + divider + brand wordmark */}
+        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+          <a
+            href="https://tanjae.pages.dev"
+            aria-label="타고 남은 재 홈으로"
+            title="타고 남은 재 홈으로"
+            className="min-h-[40px] min-w-[32px] -ml-1 inline-flex items-center justify-center text-[#595959] hover:text-[#141414] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#141414] transition-colors shrink-0"
+          >
+            <House className="w-4 h-4" aria-hidden="true" />
+          </a>
+          <span aria-hidden="true" className="h-3.5 w-px bg-[#E5E5E5] shrink-0" />
+          <button
+            type="button"
+            onClick={() => {
+              setMobileMenuOpen(false);
+              if (mode === 'report') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              } else {
+                onResetToInput();
+              }
+            }}
+            className="font-editorial text-base sm:text-lg font-bold tracking-tight text-[#141414] whitespace-nowrap shrink-0 cursor-pointer hover:opacity-75 transition-opacity min-h-[44px] inline-flex items-center"
+          >
+            차사 재(災) 명리
+          </button>
+        </div>
 
         {/* Zone 2: 4–5 single-line text nav links (Desktop) */}
         <nav

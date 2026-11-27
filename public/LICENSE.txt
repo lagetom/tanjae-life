@@ -1,0 +1,14 @@
+Copyright (c) 2026 타고 남은 재 (tanjae). All rights reserved.
+
+이 사이트의 소스 코드, 디자인, 일러스트, 명리·점성술 풀이 문구 및 계산 로직을 포함한
+모든 구성 요소의 저작권은 '타고 남은 재'에게 있습니다.
+
+- 사이트를 방문해 기능을 이용하는 것은 자유롭게 할 수 있습니다.
+- 다만 저작권자의 사전 서면 허락 없이 이 사이트의 전부 또는 일부를
+  복제·수정·재배포·재게시하거나, 다른 서비스·사이트에 옮겨 사용하는 것을 금지합니다.
+- AI 학습 데이터 수집을 포함한 자동화된 대량 수집도 허락하지 않습니다.
+
+All source code, design, illustrations, fortune-reading copy and calculation logic on
+this site are the property of "타고 남은 재" (tanjae). You may use the site as a visitor.
+Copying, modifying, redistributing or re-hosting any part of it, and automated scraping
+(including for AI training), are prohibited without prior written permission.

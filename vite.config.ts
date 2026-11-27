@@ -33,6 +33,14 @@ export default defineConfig(() => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+    build: {
+      rolldownOptions: {
+        output: {
+          postBanner:
+            '/*! © 2026 타고 남은 재. All rights reserved. 무단 복제·재배포 금지. https://tanjae.pages.dev/LICENSE.txt */',
+        },
+      },
+    },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modify—file watching is disabled to prevent flickering during agent edits.
