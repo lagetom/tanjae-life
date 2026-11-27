@@ -7,6 +7,7 @@
     "dev": "tsx server.ts",
     "start": "node server.ts",
     "build": "vite build",
+    "build:firebase": "vite build && npx esbuild firebase-functions/src/index.ts --bundle --platform=node --format=esm --target=node22 --external:firebase-functions --external:firebase-functions/* --outfile=firebase-functions/index.mjs",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit"
