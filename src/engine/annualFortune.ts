@@ -1,4 +1,4 @@
-import { AstrologyChart, WESTERN_ELEMENT_META, WesternElement } from './astrology';
+import { AstrologyChart, VEDIC_ELEMENT_META, VedicElement } from './astrology';
 import {
   BRANCHES,
   ELEMENT_META,
@@ -579,28 +579,35 @@ function buildAstrologyAnnualTransit(astrology: AstrologyChart): {
     secondHalf: string;
   };
 } {
-  const sunEl: WesternElement = astrology.sun.sign.element;
-  const moonEl: WesternElement = astrology.moon.sign.element;
+  const moonEl: VedicElement = astrology.moon.sign.element;
+  const moonSignIdx = astrology.moon.sign.index;
+  const moonLabel = `${astrology.moon.sign.sanskritKo}(${astrology.moon.sign.nameKo})`;
+  const maha = astrology.dashas.currentMahadasha;
 
-  // 2026 하반기: 목성 사자자리(불) + 토성 양자리(불)
-  // 2027 상반기: 목성 사자자리(불) / 2027 하반기(7월 말~): 목성 처녀자리(흙), 토성 양자리(불)
-  const fireFriendly = sunEl === 'fire' || sunEl === 'air';
-  const earthFriendly = sunEl === 'earth' || sunEl === 'water';
+  // 라히리 항성황도(Sidereal) 기준 2026~2027 주요 고차라(Gochar):
+  // - 샤니(토성): 2025.03 ~ 2027.06 미나(물고기자리 · 물 원소) 통과
+  // - 구루(목성): 2026 하반기 카르카(게자리 · 고조/물 원소) ↔ 2027 하반기 심하(사자자리 · 불 원소)
+  // 사데 사티(Sade Sati) 체크: 샤니가 미나(11)에 있을 때 출생 달이 물병(10)·물고기(11)·양(0)이면 사데 사티 구간
+  const inSadeSati = moonSignIdx === 10 || moonSignIdx === 11 || moonSignIdx === 0;
+  const waterFriendly = moonEl === 'water' || moonEl === 'earth';
+  const fireFriendly = moonEl === 'fire' || moonEl === 'air';
 
-  const recap2026 = fireFriendly
-    ? `서양 천궁도 흐름에서도 2026년 하반기 목성(사자자리)과 토성(양자리)이 불 원소로 이동하며 태양 ${astrology.sun.sign.nameKo}(${WESTERN_ELEMENT_META[sunEl].nameKo})에 시원한 확장과 도전의 바람을 불어넣었습니다. 새로운 무대나 자기 표현에 대한 갈망이 커졌던 연말입니다.`
-    : `서양 천궁도 흐름에서 2026년 하반기 목성(사자자리)·토성(양자리)의 뜨거운 불 원소 트랜짓은 ${astrology.sun.sign.nameKo}(${WESTERN_ELEMENT_META[sunEl].nameKo})에게 익숙한 틀 밖으로 한 걸음 나와 보라는 자극으로 작용했습니다. 다소 분주했지만 새로운 가능성을 탐색한 하반기였습니다.`;
+  const recap2026 = inSadeSati
+    ? `인도 베딕 고차라 흐름에서도 2026년 샤니(토성)가 미나(물고기자리)를 지나며 찬드라 ${moonLabel}의 사데 사티(내면 단련) 구간과 맞물렸습니다. 책임과 감정 정리가 무거웠던 만큼, 구루(목성)가 카르카(게자리)에서 고조되며 꼭 필요한 순간에 숨통과 깨달음을 열어 준 하반기였습니다.`
+    : waterFriendly
+      ? `인도 베딕 고차라 흐름에서 2026년 하반기 구루(목성)가 카르카(게자리)에서 고조되고 샤니(토성)가 미나(물고기자리)를 지나며, 찬드라 ${moonLabel}(${VEDIC_ELEMENT_META[moonEl].nameKo})의 정서적 뿌리와 직관을 깊게 북돋워 주었습니다. 내실을 다지며 소중한 인연과 배움을 쌓은 연말입니다.`
+      : `인도 베딕 고차라 흐름에서 2026년 하반기 구루(카르카)와 샤니(미나)의 깊은 물 원소 배치는 찬드라 ${moonLabel}(${VEDIC_ELEMENT_META[moonEl].nameKo})에게 속도를 잠시 늦추고 내면의 기준을 재정비하라는 신호로 작용했습니다. ${maha.lordKo}(${maha.sanskritKo}) 대운 속에서 방향을 다듬은 하반기였습니다.`;
 
   const transit2027 = {
-    headline: earthFriendly
-      ? `2027년 상반기 '방향 탐색'을 지나, 7월 목성 처녀자리 진입과 함께 본격적인 실속 결실이 열리는 흐름`
-      : `2027년 상반기 '목성 사자자리'의 확장 기운을 선점하고, 하반기 정교한 시스템화로 굳히는 흐름`,
-    firstHalf: fireFriendly
-      ? `상반기(1~7월)에는 행운의 목성이 사자자리를 지나며 태양 ${astrology.sun.sign.nameKo}의 존재감과 창조적 자신감을 크게 끌어올립니다. 굵직한 프로젝트, 네트워킹, 자기 브랜딩을 상반기에 적극적으로 펼치기 좋습니다.`
-      : `상반기(1~7월)에는 목성(사자자리)과 토성(양자리)이 내면의 용기와 자기 기준을 시험하며 워밍업을 돕습니다. 달 ${astrology.moon.sign.nameKo}의 정서적 페이스를 지키면서 하반기 도약을 위한 초안을 다듬기에 알맞습니다.`,
-    secondHalf: earthFriendly
-      ? `하반기(7월 말~12월)에는 목성이 흙 원소인 처녀자리로 이동해 ${astrology.sun.sign.nameKo}의 감각과 완벽한 조화를 이룹니다. 상반기에 뿌린 씨앗이 구체적인 일거리, 자산, 건강 루틴의 안정으로 손에 잡히는 시기입니다.`
-      : `하반기(7월 말~12월)에는 목성이 처녀자리로 옮겨가며 상반기에 넓혀 둔 판을 디테일하게 정돈하는 시간으로 전환됩니다. 실무 효율과 건강 관리, 재무 구조를 꼼꼼히 다듬을수록 성과가 오래 남습니다.`,
+    headline: fireFriendly
+      ? `2027년 상반기 카르카(게자리)의 내면 정비를 지나, 하반기 구루 심하(사자자리) 진입과 함께 본격적인 무대 확장이 열리는 흐름`
+      : `2027년 상반기 고조된 구루(카르카)의 정서적 풍요를 누리고, 하반기 심하(사자자리)에서 실력을 세상에 드러내는 흐름`,
+    firstHalf: waterFriendly
+      ? `상반기에는 구루(목성)가 카르카(게자리)의 고조 기운을 유지하며 찬드라 ${moonLabel}과 부드럽게 공명합니다. 가족·주거·학습·신뢰 관계에서 마음이 편안해지고, ${maha.lordKo} 마하다샤의 긍정적인 기운이 차분히 스며드는 시기입니다.`
+      : `상반기에는 샤니(토성)가 미나(물고기자리) 구간을 마무리하며 내면의 군더더기를 정리해 줍니다. 조급히 확장하기보다 '${astrology.janmaNakshatra.info.nameKo}' 나크샤트라의 본연의 강점을 갈고닦아 하반기 도약을 준비하기 좋습니다.`,
+    secondHalf: fireFriendly
+      ? `하반기에는 구루(목성)가 불 원소인 심하(사자자리)로 옮겨가며 찬드라 ${moonLabel}에 당당한 존재감과 추진력을 불어넣습니다. 상반기에 다져 둔 기획·브랜딩·대외 활동을 자신 있게 바깥으로 펼치기 좋은 타이밍입니다.`
+      : `하반기에는 구루(목성)가 심하(사자자리)로 이동하고 샤니의 무게가 한결 정돈되며 시야가 바깥으로 열립니다. 내면에 쌓아 둔 실력을 구체적인 직무 성과와 당당한 자기표현으로 연결할수록 보상이 커집니다.`,
   };
 
   return { recap2026, transit2027 };
@@ -673,7 +680,7 @@ export function generateAnnualReport(
         content: theme2026.letGo,
       },
       {
-        label: '2026 하반기 별자리 흐름',
+        label: '2026 하반기 베딕 고차라 흐름',
         content: astroAnnual.recap2026,
       },
     ],

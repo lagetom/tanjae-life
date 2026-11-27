@@ -27,7 +27,8 @@ const REPORT_NAV: { id: string; label: string }[] = [
   { id: 'review-2026', label: '2026 결산' },
   { id: 'forecast-2027', label: '2027 신년' },
   { id: 'innate-saju', label: '타고난 5대운' },
-  { id: 'astrology', label: '점성술' },
+  { id: 'astrology', label: '베딕 점성술' },
+  { id: 'closing', label: '종합 처방' },
 ];
 
 const RELATION_NAV: { id: string; label: string }[] = [

@@ -214,7 +214,7 @@ export function HeroInputView({
                 <span aria-hidden="true">·</span>
                 <span>2027 정미년 신년사주</span>
                 <span aria-hidden="true">·</span>
-                <span>서양 점성술 천궁도</span>
+                <span>인도 베딕 점성술</span>
               </div>
 
               <h1 className="font-editorial text-3xl sm:text-4xl lg:text-[2.65rem] font-bold leading-[1.24] tracking-tight text-[#141414] text-balance">
@@ -224,9 +224,9 @@ export function HeroInputView({
               </h1>
 
               <p className="mt-4 text-[15px] leading-relaxed text-[#525252] max-w-xl">
-                생년월일시 한 번의 입력으로 2026 병오년 연말 회고, 2027 정미년 신년사주와
-                12개월 월운표, 타고난 5대 기질, 서양 점성술 네이탈 차트까지 한 권의 리포트로
-                정리합니다.
+                생년월일시 한 번의 입력으로 2026 병오년 월별 회고, 2027 정미년 신년사주와
+                12개월 월운표, 타고난 5대 기질, 인도 베딕 쿤달리·27 나크샤트라까지 한 장씩
+                넘겨 보는 리포트로 정리합니다.
               </p>
             </div>
 
@@ -589,7 +589,7 @@ export function HeroInputView({
                 차사 재(災)의 명부(名簿)
               </h2>
               <p className="mt-1.5 text-sm text-[#595959] leading-relaxed">
-                저승 명부가 아닙니다. 액운을 대신 태워 주고 싶은 나와 인연들의 명식을 조용히 적어 두는 보관 명부입니다.
+                액운을 대신 태워 주고 싶은 나와 인연들의 명식을 조용히 적어 두는 보관 명부입니다.
               </p>
             </div>
 
@@ -789,10 +789,10 @@ export function HeroInputView({
               </div>
               <div className="py-4 grid grid-cols-1 sm:grid-cols-12 gap-2">
                 <dt className="sm:col-span-4 text-xs font-medium text-[#141414]">
-                  서양 점성술 천궁도 계산
+                  인도 베딕 점성술(조티쉬) 계산
                 </dt>
                 <dd className="sm:col-span-8 text-sm text-[#525252] leading-relaxed">
-                  태양·달·수성·금성·화성·목성·토성의 지심 황경과 서울 위경도 기준 상승궁(ASC), 주요 각도를 브라우저에서 직접 산출해 사주와 교차 분석합니다.
+                  라히리 아야남사 항성황도 기준으로 9 그라하(라후·케투 포함), 라그나(상승궁), 27 나크샤트라와 빔쇼타리 다샤 대운을 산출해 사주와 교차 분석합니다.
                 </dd>
               </div>
             </dl>

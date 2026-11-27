@@ -233,10 +233,10 @@ export function NewYearForecastSection({ forecast }: NewYearForecastSectionProps
         </div>
       </div>
 
-      {/* 2027 Western Astrology Transit Bridge */}
+      {/* 2027 Vedic Gochar Transit Bridge */}
       <div className="mt-10 pt-8 border-t border-[#EBEBEB]">
-        <p className="text-xs text-[#666666] mb-1.5">
-          2027 서양 점성술 천체 트랜짓 · 목성(사자→처녀) · 토성(양자리)
+        <p className="text-xs text-[#595959] mb-1.5">
+          2027 인도 베딕 고차라(Gochar) 트랜짓 · 구루 목성(카르카→심하) · 샤니 토성(미나)
         </p>
         <h3 className="font-editorial text-lg font-bold text-[#141414] mb-4">
           {forecast.astrologyTransit2027.headline}
@@ -244,7 +244,7 @@ export function NewYearForecastSection({ forecast }: NewYearForecastSectionProps
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="border border-[#E5E5E5] bg-white p-5">
             <p className="text-xs font-semibold text-[#141414] mb-2">
-              2027 상반기 (1월~7월 · 목성 사자자리)
+              2027 상반기 (구루 카르카 고조 · 샤니 미나 마무리)
             </p>
             <p className="text-sm leading-[1.8] text-[#404040]">
               {forecast.astrologyTransit2027.firstHalf}
@@ -252,7 +252,7 @@ export function NewYearForecastSection({ forecast }: NewYearForecastSectionProps
           </div>
           <div className="border border-[#E5E5E5] bg-white p-5">
             <p className="text-xs font-semibold text-[#141414] mb-2">
-              2027 하반기 (8월~12월 · 목성 처녀자리)
+              2027 하반기 (구루 심하 진입 · 외부 확장 전환)
             </p>
             <p className="text-sm leading-[1.8] text-[#404040]">
               {forecast.astrologyTransit2027.secondHalf}

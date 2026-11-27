@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { BokchaeModal } from './components/BokchaeModal';
 import { HeroInputView } from './components/HeroInputView';
 import { RelationshipView } from './components/RelationshipView';
-import { ReportView } from './components/ReportView';
+import { REPORT_PAGES, ReportPageId, ReportView } from './components/ReportView';
 import { TopBar } from './components/TopBar';
 import { calculateSajuChart } from './engine/manseryeok';
 import { generateReadingReport } from './engine/reportGenerator';
@@ -52,6 +52,7 @@ export default function App() {
   const [hasSyncedSelfOnce, setHasSyncedSelfOnce] = useState(false);
   const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>(() => loadLedgerEntries());
   const [bokchaeOpen, setBokchaeOpen] = useState(false);
+  const [activeReportPage, setActiveReportPage] = useState<ReportPageId>('won-guk');
   const [activeSection, setActiveSection] = useState<string>('input-form');
   const [scrollProgress, setScrollProgress] = useState<number>(0);
 
@@ -68,7 +69,8 @@ export default function App() {
     setReport(generated);
     setHasSyncedSelfOnce(false);
     setMode('report');
-    setActiveSection('review-2026');
+    setActiveReportPage('won-guk');
+    setActiveSection('won-guk');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -186,14 +188,27 @@ export default function App() {
   const handleReturnToReport = () => {
     if (report) {
       setMode('report');
-      setActiveSection('won-guk');
+      setActiveSection(activeReportPage);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       handleResetToInput();
     }
   };
 
+  const handleChangeReportPage = (page: ReportPageId) => {
+    setActiveReportPage(page);
+    setActiveSection(page);
+  };
+
   const handleNavigateSection = (id: string) => {
+    if (mode === 'report') {
+      const targetPage = REPORT_PAGES.find((p) => p.id === id);
+      if (targetPage) {
+        handleChangeReportPage(targetPage.id);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+    }
     const el = document.getElementById(id);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -201,28 +216,19 @@ export default function App() {
     }
   };
 
-  // Track scroll progress and active chapter in report / relation modes
+  // Update progress bar based on active chapter in report mode, and track sections in relation mode
   useEffect(() => {
-    if (mode !== 'report' && mode !== 'relation') return;
-
-    const handleScroll = () => {
-      if (mode !== 'report') return;
-      const scrollTop = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-      setScrollProgress(pct);
-    };
-
     if (mode === 'report') {
-      window.addEventListener('scroll', handleScroll, { passive: true });
-      handleScroll();
+      const idx = REPORT_PAGES.findIndex((p) => p.id === activeReportPage);
+      const pct = idx >= 0 ? ((idx + 1) / REPORT_PAGES.length) * 100 : 16.6;
+      setScrollProgress(pct);
+      setActiveSection(activeReportPage);
+      return;
     }
 
-    const sectionIds =
-      mode === 'report'
-        ? ['won-guk', 'review-2026', 'forecast-2027', 'innate-saju', 'astrology']
-        : ['rel-members', 'rel-graph', 'rel-pair', 'rel-group'];
+    if (mode !== 'relation') return;
 
+    const sectionIds = ['rel-members', 'rel-graph', 'rel-pair', 'rel-group'];
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -240,12 +246,9 @@ export default function App() {
     }
 
     return () => {
-      if (mode === 'report') {
-        window.removeEventListener('scroll', handleScroll);
-      }
       observer.disconnect();
     };
-  }, [mode, report, relationMembers.length]);
+  }, [mode, activeReportPage, relationMembers.length]);
 
   const isCurrentReportInLedger = useMemo(() => {
     if (!report) return false;
@@ -291,6 +294,8 @@ export default function App() {
         ) : mode === 'report' && report ? (
           <ReportView
             report={report}
+            activePage={activeReportPage}
+            onChangePage={handleChangeReportPage}
             isSavedInLedger={isCurrentReportInLedger}
             onSaveToLedger={handleSaveCurrentReportToLedger}
             onResetToInput={handleResetToInput}
