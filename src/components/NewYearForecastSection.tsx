@@ -88,7 +88,7 @@ export function NewYearForecastSection({ forecast }: NewYearForecastSectionProps
               <div className="w-16 h-16 shrink-0 overflow-hidden bg-white">
                 <SeoldamImage
                   src={SEOLDAM_ASSETS.notes.warm}
-                  alt="식빵 자세로 2027년 신년 운세를 전하는 저승차사 고양이 재(災)"
+                  alt="부채를 펼치고 2027년 신년 운세를 전하는 저승차사 고양이 재(災)"
                   className="w-full h-full object-contain"
                   fallbackTitle="재(災)"
                 />

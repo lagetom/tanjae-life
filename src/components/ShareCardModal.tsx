@@ -621,7 +621,7 @@ const ShareCardCanvas = forwardRef<HTMLDivElement, ShareCardCanvasProps>(
                 >
                   <img
                     src={SEOLDAM_ASSETS.notes.warm}
-                    alt="식빵 자세로 앉아 있는 저승차사 고양이 재(災)"
+                    alt="부채를 펼치고 있는 저승차사 고양이 재(災)"
                     crossOrigin="anonymous"
                     style={{
                       width: '100%',
