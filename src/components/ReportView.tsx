@@ -94,7 +94,7 @@ export function ReportView({
     ].join(' · ');
 
     const text = [
-      `[저승차사 재(災) 명리 리포트] ${report.coverTitle}`,
+      `[차사 재(災) 명리] ${report.coverTitle}`,
       `사주 원국: ${pillarsLine} (${chart.pillars.day.ganjiHangul}일주 · ${chart.gyeokguk.name})`,
       `2026 병오년 결산: ${report.annual.review2026.headline}`,
       `2027 정미년 신년: ${report.annual.forecast2027.headline}`,
@@ -450,7 +450,7 @@ export function ReportView({
         {/* Quiet Editorial Footer */}
         <footer className="mt-12 pt-8 border-t border-[#EBEBEB] space-y-2.5 text-xs text-[#6E6E6E]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <span>저승차사 재(災) 명리 리포트 · 자기 이해와 흥미를 위한 참고용 풀이</span>
+            <span>차사 재(災) 명리 · 자기 이해와 흥미를 위한 참고용 풀이</span>
             <span>명부에 기록해 두시면 새로고침 후에도 보관 명부에서 언제든 다시 꺼내 볼 수 있습니다.</span>
           </div>
           <p>

@@ -58,31 +58,12 @@ function extractLeadingSentences(text: string, maxSentences: number): string {
     .join(' ');
 }
 
-function StaticJaeIcon({ size = 26 }: { size?: number }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 64 64"
-      width={size}
-      height={size}
-      aria-hidden="true"
-      style={{ display: 'block', flexShrink: 0 }}
-    >
-      <rect width="64" height="64" rx="14" fill="#141414" />
-      <g fill="none" stroke="#FFFFFF" strokeLinecap="round" strokeLinejoin="round">
-        <g strokeWidth="4.6">
-          <path d="M18 7c2.4 2.8-2.4 5 0 7.8s-2.4 5 0 7.4" />
-          <path d="M32 6c2.4 2.8-2.4 5 0 7.8s-2.4 5 0 7.6" />
-          <path d="M46 7c2.4 2.8-2.4 5 0 7.8s-2.4 5 0 7.4" />
-        </g>
-        <path
-          transform="translate(12.8 24.2) scale(1.6)"
-          strokeWidth="2.7"
-          d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"
-        />
-      </g>
-    </svg>
-  );
+function formatDirectionAndSeason(direction: string, season: string): string {
+  const cleanDir = direction.trim();
+  const cleanSeason = season.trim().replace(/\s+\(/g, '(');
+  if (!cleanSeason) return cleanDir;
+  if (!cleanDir) return cleanSeason;
+  return `${cleanDir} · ${cleanSeason}`;
 }
 
 interface ShareCardCanvasProps {
@@ -755,7 +736,10 @@ const ShareCardCanvas = forwardRef<HTMLDivElement, ShareCardCanvasProps>(
                       lineHeight: 1.45,
                     }}
                   >
-                    {closingPrescription.favorableDirection} ({closingPrescription.favorableSeason})
+                    {formatDirectionAndSeason(
+                      closingPrescription.favorableDirection,
+                      closingPrescription.favorableSeason
+                    )}
                   </div>
                 </div>
 
@@ -797,7 +781,14 @@ const ShareCardCanvas = forwardRef<HTMLDivElement, ShareCardCanvasProps>(
             flexShrink: 0,
           }}
         >
-          <StaticJaeIcon size={28} />
+          <img
+            src="/favicon.svg"
+            alt=""
+            width={28}
+            height={28}
+            crossOrigin="anonymous"
+            style={{ width: '28px', height: '28px', display: 'block', flexShrink: 0 }}
+          />
           <span
             style={{
               fontSize: '23px',

@@ -3,10 +3,13 @@ import {
   ArrowLeft,
   BookMarked,
   Check,
+  ChevronLeft,
+  ChevronRight,
   Coffee,
   Copy,
   Plus,
   RotateCcw,
+  Share2,
   Trash2,
   UserPlus,
   Users,
@@ -27,15 +30,35 @@ import type {
 import { fetchRelationshipAction, toMemberSeeds } from '../utils/api';
 import { previewShorthandCode } from '../utils/shorthandCheck';
 import { type LedgerEntry, isEntryInLedger } from '../utils/storage';
+import {
+  RelationShareCardModal,
+  type RelationShareCardId,
+} from './RelationShareCardModal';
 import { RelationshipGraphSvg } from './RelationshipGraphSvg';
 import { ResetStorageButton } from './ResetStorageButton';
 import { SeoldamImage } from './SeoldamImage';
+
+export type RelationPageId = 'rel-members' | 'rel-graph' | 'rel-pair' | 'rel-group';
+
+export const RELATION_PAGES: readonly {
+  id: RelationPageId;
+  num: string;
+  shortLabel: string;
+  fullLabel: string;
+}[] = [
+  { id: 'rel-members', num: '01', shortLabel: '명식 등록', fullLabel: '명식 등록' },
+  { id: 'rel-graph', num: '02', shortLabel: '관계도', fullLabel: '관계도' },
+  { id: 'rel-pair', num: '03', shortLabel: '1:1 궁합', fullLabel: '1:1 궁합' },
+  { id: 'rel-group', num: '04', shortLabel: '모임 오행', fullLabel: '모임 오행' },
+];
 
 interface RelationshipViewProps {
   hasPersonalReport: boolean;
   selfMember: RelationMember | null;
   members: RelationMember[];
   groupReport: GroupChemistryReport | null;
+  activePage: RelationPageId;
+  onChangePage: (page: RelationPageId) => void;
   isBusy: boolean;
   ledgerEntries: LedgerEntry[];
   onUpdateRelationState: (
@@ -58,6 +81,8 @@ export function RelationshipView({
   selfMember,
   members,
   groupReport,
+  activePage,
+  onChangePage,
   isBusy,
   ledgerEntries,
   onUpdateRelationState,
@@ -91,9 +116,31 @@ export function RelationshipView({
   const [birthUnknownTime, setBirthUnknownTime] = useState(false);
   const [birthError, setBirthError] = useState<string | null>(null);
 
-  // Selected pair state
+  // Selected pair & share modal state
   const [selectedPairKey, setSelectedPairKey] = useState<string | null>(null);
   const [copiedSummary, setCopiedSummary] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [shareInitialCard, setShareInitialCard] = useState<RelationShareCardId>('pair');
+
+  const canViewAnalysis = members.length >= 2 && Boolean(groupReport);
+  const effectivePage: RelationPageId = canViewAnalysis ? activePage : 'rel-members';
+  const pageIndex = Math.max(
+    0,
+    RELATION_PAGES.findIndex((p) => p.id === effectivePage)
+  );
+  const prevPage = pageIndex > 0 ? RELATION_PAGES[pageIndex - 1] : null;
+  const nextPage = pageIndex < RELATION_PAGES.length - 1 ? RELATION_PAGES[pageIndex + 1] : null;
+
+  const handleFlipPage = (page: RelationPageId) => {
+    if (page !== 'rel-members' && !canViewAnalysis) return;
+    onChangePage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const openShareModal = (card: RelationShareCardId) => {
+    setShareInitialCard(card);
+    setShareModalOpen(true);
+  };
 
   // Live syntax preview for single shorthand input
   const livePreview = useMemo(() => {
@@ -417,7 +464,7 @@ export function RelationshipView({
   const handleCopyRelationSummary = async () => {
     if (!groupReport) return;
     const lines = [
-      `[저승차사 재(災) 사주 관계도 리포트 · ${members.length}인 명리 분석]`,
+      `[차사 재(災) 명리 · ${members.length}인 사주 관계도]`,
       ...members.map((m) => `- ${m.name}: ${m.shorthand} (${m.dayPillarCode}일주 · 용신 ${ELEMENT_META[m.yongsinPrimary].hangul})`),
       '',
       ...groupReport.pairs.map(
@@ -456,7 +503,7 @@ export function RelationshipView({
     >
       <div className="max-w-[1200px] mx-auto px-6 sm:px-8 pt-10 pb-24 lg:pt-14">
         {/* Header */}
-        <header className="pb-10 border-b border-[#E5E5E5]">
+        <header className="pb-8 border-b border-[#E5E5E5]">
           <div className="flex flex-wrap items-center gap-2 text-xs text-[#666666] mb-4">
             <span>순수 명리 궁합</span>
             <span aria-hidden="true">·</span>
@@ -477,17 +524,33 @@ export function RelationshipView({
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
-              {members.length >= 2 && (
-                <button
-                  type="button"
-                  onClick={handleCopyRelationSummary}
-                  aria-live="polite"
-                  className="min-h-[44px] sm:min-h-[36px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-[#141414] bg-white border border-[#D4D4D4] rounded-md hover:border-[#141414] transition-colors cursor-pointer whitespace-nowrap"
-                >
-                  {copiedSummary ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedSummary ? '관계 요약 복사됨' : '관계 요약 복사'}</span>
-                </button>
+            <div className="flex flex-wrap items-center gap-2 shrink-0 no-print">
+              {canViewAnalysis && activePair && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleCopyRelationSummary}
+                    aria-live="polite"
+                    className="min-h-[44px] sm:min-h-[36px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-[#141414] bg-white border border-[#D4D4D4] rounded-md hover:border-[#141414] transition-colors cursor-pointer whitespace-nowrap"
+                  >
+                    {copiedSummary ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedSummary ? '관계 요약 복사됨' : '관계 요약 복사'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openShareModal(
+                        effectivePage === 'rel-group' || effectivePage === 'rel-graph'
+                          ? 'group'
+                          : 'pair'
+                      )
+                    }
+                    className="min-h-[44px] sm:min-h-[36px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-[#141414] bg-white border border-[#D4D4D4] rounded-md hover:border-[#141414] transition-colors cursor-pointer whitespace-nowrap"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                    <span>공유 카드</span>
+                  </button>
+                </>
               )}
               <button
                 type="button"
@@ -514,16 +577,75 @@ export function RelationshipView({
               )}
             </div>
           </div>
+
+          {/* Chapter-by-Chapter Folio Stepper (Unified with ReportView) */}
+          <nav
+            aria-label="관계도 장별 넘기기"
+            className="mt-7 grid grid-cols-2 sm:grid-cols-4 border-t border-l border-[#E5E5E5] no-print"
+          >
+            {RELATION_PAGES.map((page) => {
+              const isCurrent = effectivePage === page.id;
+              const isDisabled = page.id !== 'rel-members' && !canViewAnalysis;
+              return (
+                <button
+                  key={page.id}
+                  type="button"
+                  disabled={isDisabled}
+                  aria-current={isCurrent ? 'page' : undefined}
+                  title={isDisabled ? '명식을 2명 이상 등록해 주세요' : undefined}
+                  onClick={() => handleFlipPage(page.id)}
+                  className={`min-h-[52px] px-3.5 py-3 text-left border-r border-b border-[#E5E5E5] transition-colors ${
+                    isCurrent
+                      ? 'bg-[#141414] text-white cursor-pointer'
+                      : isDisabled
+                        ? 'bg-[#FAFAFA] text-[#A3A3A3] opacity-55 cursor-not-allowed'
+                        : 'bg-white text-[#525252] hover:bg-[#FAFAFA] hover:text-[#141414] cursor-pointer'
+                  }`}
+                >
+                  <span
+                    className={`block font-mono text-[10px] tabular-nums ${
+                      isCurrent
+                        ? 'text-[#D4D4D4]'
+                        : isDisabled
+                          ? 'text-[#A3A3A3]'
+                          : 'text-[#6E6E6E]'
+                    }`}
+                  >
+                    {page.num}장
+                  </span>
+                  <span className="mt-0.5 block text-xs font-medium truncate">
+                    {page.shortLabel}
+                  </span>
+                </button>
+              );
+            })}
+          </nav>
+
+          {!canViewAnalysis && (
+            <p className="mt-3 text-xs text-[#6E6E6E]">
+              {isBusy
+                ? '명리 상관관계를 차분히 대조하고 있습니다…'
+                : '명식을 2명 이상 등록해 주세요. 2명 이상 모이면 02~04장(관계도 · 1:1 궁합 · 모임 오행)이 열립니다.'}
+            </p>
+          )}
         </header>
 
-        {/* Section 00: Input Studio & Member Roster */}
-        <section id="rel-members" className="py-12 border-b border-[#E5E5E5] scroll-mt-20">
+        {/* Active Chapter Body */}
+        <motion.div
+          key={effectivePage}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+        >
+        {/* Chapter 01: Input Studio & Member Roster */}
+        {effectivePage === 'rel-members' && (
+        <section id="rel-members" className="py-12 scroll-mt-20">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
             {/* Left: Manseryeok Entry Studio */}
             <div className="lg:col-span-5 border border-[#E5E5E5] bg-white p-6">
               <div className="flex items-center justify-between gap-3 mb-5">
                 <div>
-                  <p className="text-xs text-[#666666] mb-0.5">00. 명식 등록</p>
+                  <p className="text-xs text-[#666666] mb-0.5">01. 명식 등록</p>
                   <h2 className="font-editorial text-lg font-bold text-[#141414]">
                     만세력 직접 입력
                   </h2>
@@ -1140,34 +1262,33 @@ export function RelationshipView({
             </div>
           </div>
         </section>
+        )}
 
-        {/* Require at least 2 members for compatibility analysis */}
-        {members.length < 2 || !groupReport ? (
-          <section className="py-16 text-center">
-            <p className="font-editorial text-xl font-bold text-[#141414]">
-              {isBusy
-                ? '명리 상관관계를 차분히 대조하고 있습니다…'
-                : '두 사람 이상의 만세력이 모이면 관계도가 펼쳐집니다'}
-            </p>
-            <p className="mt-2 text-sm text-[#666666]">
-              현재 {members.length}명 등록됨 · 친구를 한 명 더 추가하거나 상단의 ‘예시 4인 불러오기’를 눌러 보세요.
-            </p>
-          </section>
-        ) : (
-          <>
-            {/* Section 01: Relationship Graph & Pairwise Matrix */}
-            <section id="rel-graph" className="py-14 border-b border-[#E5E5E5] scroll-mt-20">
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
-                <div>
-                  <p className="text-xs text-[#666666] mb-1.5">01. 사주 상관관계 연결망</p>
-                  <h2 className="font-editorial text-2xl sm:text-3xl font-bold text-[#141414]">
-                    관계도 및 1:1 궁합 매트릭스
-                  </h2>
-                </div>
-                <p className="text-xs text-[#666666]">
-                  연결선이나 표의 칸을 클릭하면 아래 1:1 상세 풀이가 즉시 전환됩니다.
-                </p>
+        {/* Chapter 02: Relationship Graph & Pairwise Matrix */}
+        {effectivePage === 'rel-graph' && groupReport && (
+          <section id="rel-graph" className="py-12 scroll-mt-20">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
+              <div>
+                <p className="text-xs text-[#666666] mb-1.5">02. 사주 상관관계 연결망</p>
+                <h2 className="font-editorial text-2xl sm:text-3xl font-bold text-[#141414]">
+                  관계도 및 1:1 궁합 매트릭스
+                </h2>
               </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {activePair && (
+                  <button
+                    type="button"
+                    onClick={() => handleFlipPage('rel-pair')}
+                    className="min-h-[40px] sm:min-h-[36px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-white bg-[#141414] rounded-md hover:bg-[#2E2E2E] transition-colors cursor-pointer whitespace-nowrap"
+                  >
+                    <span>
+                      {activePair.a.name} × {activePair.b.name} 1:1 궁합 보기
+                    </span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
                 {/* Left: Interactive SVG Graph */}
@@ -1301,28 +1422,76 @@ export function RelationshipView({
                 </div>
               </div>
             </section>
+        )}
 
-            {/* Section 02: 1:1 Detailed Pair Compatibility */}
-            {activePair && (
-              <section id="rel-pair" className="py-14 border-b border-[#E5E5E5] scroll-mt-20">
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-[#666666] mb-1.5 tabular-nums">
-                      <span>02. 선택된 1:1 명리 상관관계</span>
-                      <span aria-hidden="true">·</span>
-                      <span>{activePair.relationTier}</span>
-                      <span aria-hidden="true">·</span>
-                      <span className="font-mono text-[#141414] font-medium">
-                        명리 조화 지수 {activePair.score}점
-                      </span>
-                    </div>
-                    <h2 className="font-editorial text-2xl sm:text-3xl font-bold text-[#141414]">
-                      {activePair.a.name}({activePair.a.dayPillarCode}) × {activePair.b.name}(
-                      {activePair.b.dayPillarCode})
-                    </h2>
-                    <p className="mt-2 text-base text-[#525252]">{activePair.relationTitle}</p>
-                  </div>
+        {/* Chapter 03: 1:1 Detailed Pair Compatibility */}
+        {effectivePage === 'rel-pair' && groupReport && activePair && (
+          <section id="rel-pair" className="py-12 scroll-mt-20">
+            {/* Compact Pair Selector Strip inside Chapter 03 */}
+            {groupReport.pairs.length > 1 && (
+              <div className="mb-8 pb-5 border-b border-[#EFEFEF]">
+                <p className="text-xs text-[#6E6E6E] mb-2.5">조합 선택 ({groupReport.pairs.length}쌍)</p>
+                <div className="flex flex-wrap gap-2">
+                  {[...groupReport.pairs]
+                    .sort((a, b) => b.score - a.score)
+                    .map((pair) => {
+                      const isSelected = activePair.pairKey === pair.pairKey;
+                      return (
+                        <button
+                          key={pair.pairKey}
+                          type="button"
+                          aria-pressed={isSelected}
+                          onClick={() => setSelectedPairKey(pair.pairKey)}
+                          className={`min-h-[40px] sm:min-h-[34px] px-3 py-1.5 text-xs rounded-md border transition-colors cursor-pointer tabular-nums inline-flex items-center gap-1.5 ${
+                            isSelected
+                              ? 'bg-[#141414] text-white border-[#141414]'
+                              : 'bg-white text-[#404040] border-[#E5E5E5] hover:border-[#141414] hover:text-[#141414]'
+                          }`}
+                        >
+                          <span className="font-medium">
+                            {pair.a.name} × {pair.b.name}
+                          </span>
+                          <span
+                            className={`font-mono text-[11px] ${
+                              isSelected ? 'text-[#D4D4D4]' : 'text-[#6E6E6E]'
+                            }`}
+                          >
+                            {pair.score}점
+                          </span>
+                        </button>
+                      );
+                    })}
                 </div>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
+              <div>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-[#666666] mb-1.5 tabular-nums">
+                  <span>03. 선택된 1:1 명리 상관관계</span>
+                  <span aria-hidden="true">·</span>
+                  <span>{activePair.relationTier}</span>
+                  <span aria-hidden="true">·</span>
+                  <span className="font-mono text-[#141414] font-medium">
+                    명리 조화 지수 {activePair.score}점
+                  </span>
+                </div>
+                <h2 className="font-editorial text-2xl sm:text-3xl font-bold text-[#141414]">
+                  {activePair.a.name}({activePair.a.dayPillarCode}) × {activePair.b.name}(
+                  {activePair.b.dayPillarCode})
+                </h2>
+                <p className="mt-2 text-base text-[#525252]">{activePair.relationTitle}</p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => openShareModal('pair')}
+                className="min-h-[44px] sm:min-h-[36px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-[#141414] bg-white border border-[#D4D4D4] rounded-md hover:border-[#141414] transition-colors cursor-pointer whitespace-nowrap shrink-0 self-start sm:self-end no-print"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>이 궁합 공유 카드</span>
+              </button>
+            </div>
 
                 {/* Asymmetric Editorial Grid (8 cols analysis / 4 cols Seoldam Margin Note) */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
@@ -1485,24 +1654,34 @@ export function RelationshipView({
                     </p>
                   </aside>
                 </div>
-              </section>
-            )}
+          </section>
+        )}
 
-            {/* Section 03: Collective Group Five Elements & Multi-Member Roles */}
-            <section id="rel-group" className="pt-14 scroll-mt-20">
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
-                <div>
-                  <p className="text-xs text-[#666666] mb-1.5">
-                    03. {members.length}인 합산 오행 및 다자 시너지
-                  </p>
-                  <h2 className="font-editorial text-2xl sm:text-3xl font-bold text-[#141414]">
-                    {groupReport.groupTemperamentTitle}
-                  </h2>
-                  <p className="mt-2 text-sm leading-relaxed text-[#525252] max-w-2xl">
-                    {groupReport.groupTemperamentSummary}
-                  </p>
-                </div>
+        {/* Chapter 04: Collective Group Five Elements & Multi-Member Roles */}
+        {effectivePage === 'rel-group' && groupReport && (
+          <section id="rel-group" className="py-12 scroll-mt-20">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
+              <div>
+                <p className="text-xs text-[#666666] mb-1.5">
+                  04. {members.length}인 합산 오행 및 다자 시너지
+                </p>
+                <h2 className="font-editorial text-2xl sm:text-3xl font-bold text-[#141414]">
+                  {groupReport.groupTemperamentTitle}
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-[#525252] max-w-2xl">
+                  {groupReport.groupTemperamentSummary}
+                </p>
               </div>
+
+              <button
+                type="button"
+                onClick={() => openShareModal('group')}
+                className="min-h-[44px] sm:min-h-[36px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-[#141414] bg-white border border-[#D4D4D4] rounded-md hover:border-[#141414] transition-colors cursor-pointer whitespace-nowrap shrink-0 self-start sm:self-end no-print"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>모임 관계도 공유 카드</span>
+              </button>
+            </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
                 {/* Collective Five-Element Bars */}
@@ -1689,14 +1868,64 @@ export function RelationshipView({
                   </div>
                 </div>
               </div>
-            </section>
-          </>
+          </section>
         )}
+        </motion.div>
+
+        {/* Bottom Book-Like Page-Turn Navigation Bar (Unified with ReportView) */}
+        <nav
+          aria-label="이전 장 · 다음 장 이동"
+          className="mt-10 pt-8 border-t border-[#141414] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 no-print"
+        >
+          {prevPage ? (
+            <button
+              type="button"
+              onClick={() => handleFlipPage(prevPage.id)}
+              className="min-h-[48px] inline-flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 text-xs font-medium text-[#141414] bg-white border border-[#D4D4D4] rounded-md hover:border-[#141414] transition-colors cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4 shrink-0" />
+              <span>
+                {prevPage.num}장 · {prevPage.fullLabel}
+              </span>
+            </button>
+          ) : (
+            <div className="hidden sm:block" />
+          )}
+
+          <p className="text-center font-mono text-xs text-[#6E6E6E] tabular-nums py-1">
+            {String(pageIndex + 1).padStart(2, '0')} / {String(RELATION_PAGES.length).padStart(2, '0')}장
+          </p>
+
+          {nextPage ? (
+            <button
+              type="button"
+              disabled={!canViewAnalysis}
+              title={!canViewAnalysis ? '명식을 2명 이상 등록해 주세요' : undefined}
+              onClick={() => handleFlipPage(nextPage.id)}
+              className="min-h-[48px] inline-flex items-center justify-center sm:justify-end gap-2 px-5 py-2.5 text-xs font-medium text-white bg-[#141414] rounded-md hover:bg-[#2E2E2E] disabled:opacity-35 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            >
+              <span>
+                {!canViewAnalysis
+                  ? '명식을 2명 이상 등록해 주세요'
+                  : `다음 장 · ${nextPage.num}. ${nextPage.fullLabel}`}
+              </span>
+              {canViewAnalysis && <ChevronRight className="w-4 h-4 shrink-0" />}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => handleFlipPage('rel-members')}
+              className="min-h-[48px] inline-flex items-center justify-center sm:justify-end gap-2 px-5 py-2.5 text-xs font-medium text-[#141414] bg-[#FAFAFA] border border-[#141414] rounded-md hover:bg-[#141414] hover:text-white transition-colors cursor-pointer"
+            >
+              <span>처음 장(명식 등록)으로 돌아가기</span>
+            </button>
+          )}
+        </nav>
 
         {/* Quiet Editorial Footer */}
-        <footer className="mt-16 pt-8 border-t border-[#EBEBEB] space-y-2.5 text-xs text-[#6E6E6E]">
+        <footer className="mt-12 pt-8 border-t border-[#EBEBEB] space-y-2.5 text-xs text-[#6E6E6E]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <span>저승차사 재(災) 명리 리포트 · 순수 명리 원국 기반 참고용 다자 사주 관계도</span>
+            <span>차사 재(災) 명리 · 순수 명리 원국 기반 참고용 다자 사주 관계도</span>
             <span>명부에 기록한 만세력만 현재 브라우저에 보관되며 외부로 전송되지 않습니다.</span>
           </div>
           <p>
@@ -1717,6 +1946,17 @@ export function RelationshipView({
           </p>
         </footer>
       </div>
+
+      {groupReport && activePair && (
+        <RelationShareCardModal
+          open={shareModalOpen}
+          members={members}
+          groupReport={groupReport}
+          activePair={activePair}
+          initialCard={shareInitialCard}
+          onClose={() => setShareModalOpen(false)}
+        />
+      )}
     </motion.main>
   );
 }

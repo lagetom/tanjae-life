@@ -5,6 +5,7 @@ interface TopBarProps {
   mode: 'input' | 'report' | 'relation';
   hasPersonalReport: boolean;
   activeSection: string;
+  disabledSectionIds?: string[];
   scrollProgress: number;
   onResetToInput: () => void;
   onOpenRelation: () => void;
@@ -42,6 +43,7 @@ export function TopBar({
   mode,
   hasPersonalReport,
   activeSection,
+  disabledSectionIds = [],
   scrollProgress,
   onResetToInput,
   onOpenRelation,
@@ -106,16 +108,21 @@ export function TopBar({
         >
           {links.map((item) => {
             const isActive = activeSection === item.id;
+            const isDisabled = disabledSectionIds.includes(item.id);
             return (
               <button
                 key={item.id}
                 type="button"
+                disabled={isDisabled}
+                title={isDisabled ? '명식을 2명 이상 등록해 주세요' : undefined}
                 aria-current={isActive ? 'location' : undefined}
                 onClick={() => handleNavClick(item.id)}
-                className={`py-1 whitespace-nowrap shrink-0 transition-colors cursor-pointer border-b ${
+                className={`py-1 whitespace-nowrap shrink-0 transition-colors border-b ${
                   isActive
-                    ? 'text-[#141414] font-medium border-[#141414]'
-                    : 'border-transparent hover:text-[#141414] hover:border-[#CCCCCC]'
+                    ? 'text-[#141414] font-medium border-[#141414] cursor-pointer'
+                    : isDisabled
+                      ? 'border-transparent text-[#BDBDBD] cursor-not-allowed'
+                      : 'border-transparent hover:text-[#141414] hover:border-[#CCCCCC] cursor-pointer'
                 }`}
               >
                 {item.label}
@@ -209,19 +216,28 @@ export function TopBar({
           <ul className="divide-y divide-[#F0F0F0]">
             {links.map((item) => {
               const isActive = activeSection === item.id;
+              const isDisabled = disabledSectionIds.includes(item.id);
               return (
                 <li key={item.id}>
                   <button
                     type="button"
+                    disabled={isDisabled}
                     aria-current={isActive ? 'location' : undefined}
                     onClick={() => handleNavClick(item.id)}
-                    className={`w-full min-h-[48px] px-2 flex items-center justify-between text-sm transition-colors cursor-pointer ${
-                      isActive ? 'text-[#141414] font-semibold' : 'text-[#525252]'
+                    className={`w-full min-h-[48px] px-2 flex items-center justify-between text-sm transition-colors ${
+                      isActive
+                        ? 'text-[#141414] font-semibold cursor-pointer'
+                        : isDisabled
+                          ? 'text-[#BDBDBD] cursor-not-allowed'
+                          : 'text-[#525252] cursor-pointer'
                     }`}
                   >
                     <span>{item.label}</span>
                     {isActive && (
                       <span className="text-xs text-[#6E6E6E]">현재 위치</span>
+                    )}
+                    {isDisabled && (
+                      <span className="text-[11px] text-[#A3A3A3]">2명 이상 필요</span>
                     )}
                   </button>
                 </li>
@@ -231,15 +247,15 @@ export function TopBar({
         </nav>
       )}
 
-      {/* Editorial Reading Progress Bar (Report mode only) */}
-      {mode === 'report' && (
+      {/* Editorial Reading Progress Bar (Report & Relation chapter modes) */}
+      {(mode === 'report' || mode === 'relation') && (
         <div
           className="h-[2px] w-full bg-transparent overflow-hidden"
           role="progressbar"
           aria-valuenow={Math.round(scrollProgress)}
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-label="리포트 읽기 진행률"
+          aria-label={mode === 'report' ? '리포트 읽기 진행률' : '관계도 장 진행률'}
         >
           <div
             className="h-full bg-[#141414] origin-left transition-transform duration-150 ease-out"

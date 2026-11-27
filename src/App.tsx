@@ -6,7 +6,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { BokchaeModal } from './components/BokchaeModal';
 import { HeroInputView } from './components/HeroInputView';
-import { RelationshipView } from './components/RelationshipView';
+import {
+  RELATION_PAGES,
+  type RelationPageId,
+  RelationshipView,
+} from './components/RelationshipView';
 import { REPORT_PAGES, type ReportPageId, ReportView } from './components/ReportView';
 import { TopBar } from './components/TopBar';
 import { PRESET_PROFILES } from './constants/uiMeta';
@@ -56,6 +60,7 @@ export default function App() {
   const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>(() => loadLedgerEntries());
   const [bokchaeOpen, setBokchaeOpen] = useState(false);
   const [activeReportPage, setActiveReportPage] = useState<ReportPageId>('won-guk');
+  const [activeRelationPage, setActiveRelationPage] = useState<RelationPageId>('rel-members');
   const [activeSection, setActiveSection] = useState<string>('input-form');
   const [scrollProgress, setScrollProgress] = useState<number>(0);
 
@@ -70,6 +75,9 @@ export default function App() {
   ) => {
     setRelationMembers(nextMembers);
     setGroupReport(nextGroupReport);
+    if (nextMembers.length < 2 || !nextGroupReport) {
+      setActiveRelationPage('rel-members');
+    }
   };
 
   const runAnalysis = async (input: BirthInput) => {
@@ -138,8 +146,8 @@ export default function App() {
 
     const base = relationMembers.every((m) => m.isSample) ? [] : relationMembers;
     setMode('relation');
+    setActiveRelationPage('rel-members');
     setActiveSection('rel-members');
-    setScrollProgress(0);
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     setIsRelationBusy(true);
@@ -180,8 +188,8 @@ export default function App() {
   const handleOpenLedgerInRelation = async () => {
     setHasSyncedSelfOnce(true);
     setMode('relation');
+    setActiveRelationPage('rel-members');
     setActiveSection('rel-members');
-    setScrollProgress(0);
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     setIsRelationBusy(true);
@@ -222,8 +230,8 @@ export default function App() {
 
   const handleOpenRelation = async () => {
     setMode('relation');
+    setActiveRelationPage('rel-members');
     setActiveSection('rel-members');
-    setScrollProgress(0);
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     if (selfMember && !hasSyncedSelfOnce) {
@@ -269,11 +277,30 @@ export default function App() {
     setActiveSection(page);
   };
 
+  const handleChangeRelationPage = (page: RelationPageId) => {
+    if (page !== 'rel-members' && (relationMembers.length < 2 || !groupReport)) {
+      return;
+    }
+    setActiveRelationPage(page);
+    setActiveSection(page);
+  };
+
   const handleNavigateSection = (id: string) => {
     if (mode === 'report') {
       const targetPage = REPORT_PAGES.find((p) => p.id === id);
       if (targetPage) {
         handleChangeReportPage(targetPage.id);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+    }
+    if (mode === 'relation') {
+      const targetPage = RELATION_PAGES.find((p) => p.id === id);
+      if (targetPage) {
+        if (targetPage.id !== 'rel-members' && (relationMembers.length < 2 || !groupReport)) {
+          return;
+        }
+        handleChangeRelationPage(targetPage.id);
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
@@ -285,7 +312,7 @@ export default function App() {
     }
   };
 
-  // Update progress bar based on active chapter in report mode, and track sections in relation mode
+  // Update progress bar based on active chapter in report and relation modes
   useEffect(() => {
     if (mode === 'report') {
       const idx = REPORT_PAGES.findIndex((p) => p.id === activeReportPage);
@@ -295,29 +322,15 @@ export default function App() {
       return;
     }
 
-    if (mode !== 'relation') return;
-
-    const sectionIds = ['rel-members', 'rel-graph', 'rel-pair', 'rel-group'];
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.id);
-          }
-        }
-      },
-      { rootMargin: '-25% 0px -60% 0px', threshold: 0.01 }
-    );
-
-    for (const id of sectionIds) {
-      const el = document.getElementById(id);
-      if (el) observer.observe(el);
+    if (mode === 'relation') {
+      const effectiveRelPage: RelationPageId =
+        relationMembers.length >= 2 && groupReport ? activeRelationPage : 'rel-members';
+      const idx = RELATION_PAGES.findIndex((p) => p.id === effectiveRelPage);
+      const pct = idx >= 0 ? ((idx + 1) / RELATION_PAGES.length) * 100 : 25;
+      setScrollProgress(pct);
+      setActiveSection(effectiveRelPage);
     }
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [mode, activeReportPage, relationMembers.length]);
+  }, [mode, activeReportPage, activeRelationPage, relationMembers.length, groupReport]);
 
   const isCurrentReportInLedger = useMemo(() => {
     if (!report) return false;
@@ -339,6 +352,11 @@ export default function App() {
         mode={mode}
         hasPersonalReport={Boolean(report)}
         activeSection={activeSection}
+        disabledSectionIds={
+          mode === 'relation' && (relationMembers.length < 2 || !groupReport)
+            ? ['rel-graph', 'rel-pair', 'rel-group']
+            : []
+        }
         scrollProgress={scrollProgress}
         onResetToInput={handleResetToInput}
         onOpenRelation={handleOpenRelation}
@@ -355,6 +373,8 @@ export default function App() {
             selfMember={selfMember}
             members={relationMembers}
             groupReport={groupReport}
+            activePage={activeRelationPage}
+            onChangePage={handleChangeRelationPage}
             isBusy={isRelationBusy}
             ledgerEntries={ledgerEntries}
             onUpdateRelationState={handleUpdateRelationState}
