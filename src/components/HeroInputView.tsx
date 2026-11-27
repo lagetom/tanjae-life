@@ -241,9 +241,7 @@ export function HeroInputView({
               </h1>
 
               <p className="mt-4 text-[15px] leading-relaxed text-[#525252] max-w-xl">
-                생년월일시 한 번의 입력으로 2026 병오년 월별 회고, 2027 정미년 신년사주와
-                12개월 월운표, 타고난 5대 기질, 인도 베딕 쿤달리·27 나크샤트라까지 한 장씩
-                넘겨 보는 리포트로 정리합니다.
+                생년월일 한 번으로 사주와 인도 베딕 점성술을 한 장씩 풀어 드립니다.
               </p>
             </div>
 
@@ -578,9 +576,7 @@ export function HeroInputView({
 
             <div className="mt-6 pt-5 border-t border-[#E5E5E5]">
               <p className="font-editorial text-[15px] leading-relaxed text-[#262626]">
-                “뜨거웠던 2026 병오년의 잔불과 액운은 제가 조용히 태워 보내드리겠습니다.
-                생년월일을 적어 주시면 다가오는 2027 정미년의 흐름을 사주와 별자리로
-                나란히 펼쳐 차분히 안내해 드리겠습니다.”
+                “올해 남은 액운은 제가 태워 드리겠습니다.”
               </p>
               <div className="mt-3 flex items-center justify-between text-xs text-[#737373]">
                 <span className="font-editorial italic">Fig. 01 — 저승차사 재(災)</span>
@@ -642,8 +638,7 @@ export function HeroInputView({
                 아직 명부에 기록된 인연이 없습니다
               </p>
               <p className="mt-1.5 text-xs text-[#595959] leading-relaxed max-w-md mx-auto">
-                위 입력창에서 ‘명부에 올리기’를 누르거나 리포트·관계도 화면에서 기록해 두시면,
-                새로고침 후에도 언제든 이 명부에서 바로 꺼내 보실 수 있습니다.
+                명부에 올린 명식은 이 기기에 보관됩니다.
               </p>
             </div>
           ) : (
@@ -719,16 +714,11 @@ export function HeroInputView({
       {/* Presets Strip */}
       <section id="presets" className="border-t border-[#E5E5E5] bg-[#FAFAFA] scroll-mt-16">
         <div className="max-w-[1200px] mx-auto px-6 sm:px-8 py-14">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
-            <div>
-              <p className="text-xs text-[#666666] mb-1.5">리포트 미리 보기</p>
-              <h2 className="font-editorial text-2xl font-bold text-[#141414]">
-                예시 명식으로 구성 살펴보기
-              </h2>
-            </div>
-            <p className="text-xs text-[#666666]">
-              클릭하면 해당 명식의 만세력 원국표와 5대 영역 리포트가 즉시 열립니다.
-            </p>
+          <div className="mb-8">
+            <p className="text-xs text-[#666666] mb-1.5">리포트 미리 보기</p>
+            <h2 className="font-editorial text-2xl font-bold text-[#141414]">
+              예시 명식으로 구성 살펴보기
+            </h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -779,61 +769,24 @@ export function HeroInputView({
         </div>
       </section>
 
-      {/* Standards & Seoldam Editorial Footer Info */}
+      {/* Seoldam Speaker Intro & Quiet Notes */}
       <section
-        id="standards"
+        id="seoldam-intro"
         className="border-t border-[#E5E5E5] bg-white scroll-mt-16"
       >
-        <div className="max-w-[1200px] mx-auto px-6 sm:px-8 py-16 grid grid-cols-1 lg:grid-cols-12 gap-12">
-          <div className="lg:col-span-7">
-            <p className="text-xs text-[#595959] mb-2">만세력 산출 원칙</p>
-            <h2 className="font-editorial text-2xl font-bold text-[#141414] mb-6">
-              정확한 천문 절기와 투명한 명리학 규칙
-            </h2>
-
-            <dl className="divide-y divide-[#EBEBEB] border-t border-b border-[#EBEBEB]">
-              <div className="py-4 grid grid-cols-1 sm:grid-cols-12 gap-2">
-                <dt className="sm:col-span-4 text-xs font-medium text-[#141414]">
-                  24절기 태양 황경 계산
-                </dt>
-                <dd className="sm:col-span-8 text-sm text-[#525252] leading-relaxed">
-                  입춘(황경 315°)을 기준으로 연주를 가르고, 12절입 시각을 천문 공식으로 계산해 월주를 정확히 세웁니다.
-                </dd>
-              </div>
-              <div className="py-4 grid grid-cols-1 sm:grid-cols-12 gap-2">
-                <dt className="sm:col-span-4 text-xs font-medium text-[#141414]">
-                  음력 · 윤달 및 진태양시
-                </dt>
-                <dd className="sm:col-span-8 text-sm text-[#525252] leading-relaxed">
-                  1900~2050년 음양력 변환과 윤달 검증을 내장했으며, 한국 표준시와 서울 경도 차이를 반영한 −30분 진태양시 보정을 지원합니다.
-                </dd>
-              </div>
-              <div className="py-4 grid grid-cols-1 sm:grid-cols-12 gap-2">
-                <dt className="sm:col-span-4 text-xs font-medium text-[#141414]">
-                  인도 베딕 점성술(조티쉬) 계산
-                </dt>
-                <dd className="sm:col-span-8 text-sm text-[#525252] leading-relaxed">
-                  라히리 아야남사 항성황도 기준으로 9 그라하(라후·케투 포함), 라그나(상승궁), 27 나크샤트라와 빔쇼타리 다샤 대운을 산출해 사주와 교차 분석합니다.
-                </dd>
-              </div>
-            </dl>
-          </div>
-
-          <div id="seoldam-intro" className="lg:col-span-5 lg:border-l lg:border-[#E5E5E5] lg:pl-12 flex flex-col justify-between scroll-mt-20">
-            <div>
-              <p className="text-xs text-[#595959] mb-2">화자 소개</p>
-              <h2 className="font-editorial text-2xl font-bold text-[#141414] mb-4">
-                저승차사 재(災)
-              </h2>
-              <p className="text-sm leading-[1.85] text-[#525252]">
-                재(災)는 사람들의 재앙(災)과 액운을 대신 불태워 주고 타고 남은 ‘재’가 된
-                잿빛 고양이 저승차사입니다. 본문에서는 객관적인 명리·점성학 근거를 단정하게
-                서술하고, 오른편 ‘여백 노트’에서는 차분하고 정중한 어조로 지나온 해의 결산과
-                다가올 흐름의 핵심만 고요히 짚어 드립니다.
-              </p>
-            </div>
-            <p className="mt-8 text-xs text-[#6E6E6E]">
-              차사 재(災) 명리 · 입력하신 생년월일은 일회성 풀이 산출에만 쓰이고 서버에 저장되지 않으며, 명부 기록은 현재 기기 브라우저에만 보관됩니다.
+        <div className="max-w-2xl mx-auto px-6 sm:px-8 py-14 text-center">
+          <p className="text-xs text-[#595959] mb-2">화자 소개</p>
+          <h2 className="font-editorial text-2xl font-bold text-[#141414] mb-4">
+            저승차사 재(災)
+          </h2>
+          <p className="text-sm leading-[1.85] text-[#525252]">
+            재(災)는 사람들의 재앙과 액운을 대신 불태워 주고, 타고 남은 &apos;재&apos;가 된
+            잿빛 고양이 저승차사입니다.
+          </p>
+          <div className="mt-7 pt-6 border-t border-[#EFEFEF] space-y-1.5 text-xs text-[#6E6E6E]">
+            <p>절기는 천문 계산으로 나누며, 서울 진태양시(−30분) 보정을 적용합니다.</p>
+            <p>
+              입력하신 생년월일은 풀이에만 쓰이며 서버에 저장되지 않습니다. 명부는 이 기기 브라우저에만 보관됩니다.
             </p>
           </div>
         </div>

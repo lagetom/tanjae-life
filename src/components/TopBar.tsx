@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Coffee, House, Menu, X } from 'lucide-react';
+import { Coffee, Menu, X } from 'lucide-react';
 
 interface TopBarProps {
   mode: 'input' | 'report' | 'relation';
@@ -183,15 +183,6 @@ export function TopBar({
             <Coffee className="w-3.5 h-3.5" />
             <span>복채</span>
           </button>
-
-          <a
-            href="https://tanjae.pages.dev"
-            aria-label="만든 사람: 타고 남은 재 홈"
-            title="만든 사람: 타고 남은 재 홈"
-            className="h-[40px] w-[40px] sm:h-[34px] sm:w-[34px] inline-flex items-center justify-center text-[#595959] bg-white border border-[#D4D4D4] rounded-md hover:text-[#141414] hover:border-[#141414] transition-colors shrink-0"
-          >
-            <House className="w-4 h-4" aria-hidden="true" />
-          </a>
 
           <button
             type="button"

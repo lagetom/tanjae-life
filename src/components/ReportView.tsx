@@ -449,10 +449,7 @@ export function ReportView({
 
         {/* Quiet Editorial Footer */}
         <footer className="mt-12 pt-8 border-t border-[#EBEBEB] space-y-2.5 text-xs text-[#6E6E6E]">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <span>차사 재(災) 명리 · 자기 이해와 흥미를 위한 참고용 풀이</span>
-            <span>명부에 기록해 두시면 새로고침 후에도 보관 명부에서 언제든 다시 꺼내 볼 수 있습니다.</span>
-          </div>
+          <p>차사 재(災) 명리 · 자기 이해와 흥미를 위한 참고용 풀이</p>
           <p>
             © 2026{' '}
             <a

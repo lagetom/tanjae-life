@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { ArrowUpRight, X } from 'lucide-react';
+import { ArrowUpRight, House, X } from 'lucide-react';
 import { SEOLDAM_ASSETS } from '../constants/assets';
 import { BOKCHAE_CONFIG, BOKCHAE_ITEMS } from '../constants/bokchae';
 import { SeoldamImage } from './SeoldamImage';
@@ -113,6 +113,19 @@ export function BokchaeModal({ open, onClose }: BokchaeModalProps) {
           <p className="text-[11.5px] font-medium text-[#595959] leading-relaxed">
             {BOKCHAE_CONFIG.ftcNotice}
           </p>
+        </div>
+
+        {/* Creator Home Link (New Tab) */}
+        <div className="mt-4 pt-3.5 border-t border-[#EFEFEF]">
+          <a
+            href="https://tanjae.pages.dev"
+            target="_blank"
+            rel="noopener"
+            className="inline-flex items-center gap-1.5 text-xs text-[#6E6E6E] hover:text-[#141414] transition-colors"
+          >
+            <House className="w-[14px] h-[14px] shrink-0" aria-hidden="true" />
+            <span>만든 사람의 다른 웹앱도 구경하러 오십시오 · 타고 남은 재 →</span>
+          </a>
         </div>
       </div>
     </div>
