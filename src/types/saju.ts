@@ -461,6 +461,7 @@ export interface ReadingReport {
   coverTitle: string;
   dayPillarSymbol: string;
   openingGreeting: string;
+  seoldamQuip?: string;
   executiveSummary: string;
   chapters: ReportChapter[];
   closingPrescription: {

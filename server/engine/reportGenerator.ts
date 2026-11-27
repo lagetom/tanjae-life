@@ -114,7 +114,7 @@ export function generateReadingReport(chart: SajuChart): ReadingReport {
   const seasonWord = pillars.month.branch.season;
   const dmTitle = `${dayMaster.hangul}(${dayMaster.hanja}) · ${dayMaster.natureTitle}`;
 
-  const openingGreeting = `${seasonWord}의 절기(${chart.solarTermName})에 태어난 ${pillars.day.ganjiHangul}(${pillars.day.ganjiHanja})일주이시군요. 뜨거웠던 2026 병오년의 액운은 제가 대신 태워 보내드리고, 2027 정미년을 여는 문턱에서 원국을 살펴보니, ${dayProfile.seoldamQuip}`;
+  const openingGreeting = `${pillars.day.ganjiHangul}(${pillars.day.ganjiHanja})일주, ${chart.solarTermName} 무렵에 태어나셨습니다. ${dayProfile.seoldamQuip}`;
 
   const executiveSummary = `${dmTitle}의 본성을 바탕으로 ${gyeokguk.name}의 사회적 기질이 중심을 잡는 ${strength.grade} 명식입니다. 원국에서는 ${strongest.hangul}(${strongest.hanja}) 기운이 ${strongest.percentage}%로 가장 뚜렷하게 작동하며, 전체 균형을 매끄럽게 열어 주는 핵심 보완 기운(용신)은 ${ELEMENT_META[yongsin.primary].hangul}(${ELEMENT_META[yongsin.primary].hanja})입니다.`;
 
@@ -473,6 +473,7 @@ export function generateReadingReport(chart: SajuChart): ReadingReport {
     coverTitle,
     dayPillarSymbol: dayProfile.symbol,
     openingGreeting,
+    seoldamQuip: dayProfile.seoldamQuip,
     executiveSummary,
     chapters: [
       personalityChapter,

@@ -2915,7 +2915,7 @@ function generateReadingReport(chart) {
   const coverTitle = `${displayName}2026 \uC5F0\uB9D0\uACB0\uC0B0 \xB7 2027 \uC2E0\uB144 \uBA85\uB9AC \uB9AC\uD3EC\uD2B8`;
   const seasonWord = pillars.month.branch.season;
   const dmTitle = `${dayMaster.hangul}(${dayMaster.hanja}) \xB7 ${dayMaster.natureTitle}`;
-  const openingGreeting = `${seasonWord}\uC758 \uC808\uAE30(${chart.solarTermName})\uC5D0 \uD0DC\uC5B4\uB09C ${pillars.day.ganjiHangul}(${pillars.day.ganjiHanja})\uC77C\uC8FC\uC774\uC2DC\uAD70\uC694. \uB728\uAC70\uC6E0\uB358 2026 \uBCD1\uC624\uB144\uC758 \uC561\uC6B4\uC740 \uC81C\uAC00 \uB300\uC2E0 \uD0DC\uC6CC \uBCF4\uB0B4\uB4DC\uB9AC\uACE0, 2027 \uC815\uBBF8\uB144\uC744 \uC5EC\uB294 \uBB38\uD131\uC5D0\uC11C \uC6D0\uAD6D\uC744 \uC0B4\uD3B4\uBCF4\uB2C8, ${dayProfile.seoldamQuip}`;
+  const openingGreeting = `${pillars.day.ganjiHangul}(${pillars.day.ganjiHanja})\uC77C\uC8FC, ${chart.solarTermName} \uBB34\uB835\uC5D0 \uD0DC\uC5B4\uB098\uC168\uC2B5\uB2C8\uB2E4. ${dayProfile.seoldamQuip}`;
   const executiveSummary = `${dmTitle}\uC758 \uBCF8\uC131\uC744 \uBC14\uD0D5\uC73C\uB85C ${gyeokguk.name}\uC758 \uC0AC\uD68C\uC801 \uAE30\uC9C8\uC774 \uC911\uC2EC\uC744 \uC7A1\uB294 ${strength.grade} \uBA85\uC2DD\uC785\uB2C8\uB2E4. \uC6D0\uAD6D\uC5D0\uC11C\uB294 ${strongest.hangul}(${strongest.hanja}) \uAE30\uC6B4\uC774 ${strongest.percentage}%\uB85C \uAC00\uC7A5 \uB69C\uB837\uD558\uAC8C \uC791\uB3D9\uD558\uBA70, \uC804\uCCB4 \uADE0\uD615\uC744 \uB9E4\uB044\uB7FD\uAC8C \uC5F4\uC5B4 \uC8FC\uB294 \uD575\uC2EC \uBCF4\uC644 \uAE30\uC6B4(\uC6A9\uC2E0)\uC740 ${ELEMENT_META[yongsin.primary].hangul}(${ELEMENT_META[yongsin.primary].hanja})\uC785\uB2C8\uB2E4.`;
   const hasClash = interactions.some((i) => i.type === "\uC9C0\uC9C0\uCDA9");
   const hasCombine = interactions.some((i) => i.type === "\uCC9C\uAC04\uD569" || i.type === "\uC9C0\uC9C0\uC721\uD569" || i.type === "\uC9C0\uC9C0\uC0BC\uD569");
@@ -3116,6 +3116,7 @@ function generateReadingReport(chart) {
     coverTitle,
     dayPillarSymbol: dayProfile.symbol,
     openingGreeting,
+    seoldamQuip: dayProfile.seoldamQuip,
     executiveSummary,
     chapters: [
       personalityChapter,

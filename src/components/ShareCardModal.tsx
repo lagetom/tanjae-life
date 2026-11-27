@@ -79,10 +79,14 @@ const ShareCardCanvas = forwardRef<HTMLDivElement, ShareCardCanvasProps>(
 
     const { chart, annual, closingPrescription } = report;
     const dayPillarLabel = `${chart.pillars.day.ganjiHangul}(${chart.pillars.day.ganjiHanja})일주`;
-    const firstGreetingSentence = useMemo(
-      () => extractFirstSentence(report.openingGreeting),
-      [report.openingGreeting]
-    );
+    const firstGreetingSentence = useMemo(() => {
+      if (report.seoldamQuip) {
+        return extractFirstSentence(report.seoldamQuip);
+      }
+      const cleaned = report.openingGreeting.replace(/\s+/g, ' ').trim();
+      const sentences = cleaned.match(/[^.!?。]+[.!?。]?/g)?.map((s) => s.trim()).filter(Boolean) ?? [];
+      return sentences[1] ?? sentences[0] ?? cleaned;
+    }, [report.seoldamQuip, report.openingGreeting]);
     const forecastShortDesc = useMemo(
       () => extractLeadingSentences(annual.forecast2027.overviewParagraphs[0] || '', 2),
       [annual.forecast2027.overviewParagraphs]
