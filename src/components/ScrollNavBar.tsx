@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowDownToLine, ArrowUpToLine, Minus } from 'lucide-react';
+import {
+  ArrowDownToLine,
+  ArrowUpToLine,
+  ChevronDown,
+  ChevronsUpDown,
+  Minus,
+} from 'lucide-react';
 
 type ScrollZone = 'top' | 'middle' | 'bottom';
 
@@ -9,10 +15,32 @@ interface ScrollNavBarProps {
 }
 
 const MIN_SCROLLABLE_PX = 280;
+const MINI_STORAGE_KEY = 'chasaju:scroll-nav-mini';
+
+function loadMiniPreference(): boolean {
+  try {
+    return window.localStorage.getItem(MINI_STORAGE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
 
 export function ScrollNavBar({ watchKey }: ScrollNavBarProps) {
   const [visible, setVisible] = useState(false);
   const [activeZone, setActiveZone] = useState<ScrollZone>('top');
+  const [isMini, setIsMini] = useState<boolean>(() => loadMiniPreference());
+
+  const toggleMini = () => {
+    setIsMini((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem(MINI_STORAGE_KEY, next ? '1' : '0');
+      } catch {
+        // Ignore storage errors in restricted browsing contexts
+      }
+      return next;
+    });
+  };
 
   const syncScrollState = useCallback(() => {
     const doc = document.documentElement;
@@ -83,6 +111,26 @@ export function ScrollNavBar({ watchKey }: ScrollNavBarProps) {
     { zone: 'bottom', label: '맨 아래', ariaLabel: '페이지 맨 아래로 이동', Icon: ArrowDownToLine },
   ];
 
+  if (isMini) {
+    return (
+      <nav
+        aria-label="페이지 빠른 이동"
+        className="fixed right-3 bottom-4 sm:right-6 sm:bottom-6 z-30 no-print"
+      >
+        <button
+          type="button"
+          onClick={toggleMini}
+          aria-expanded={false}
+          aria-label="빠른 이동 바 펼치기"
+          title="빠른 이동 바 펼치기"
+          className="w-[40px] h-[40px] sm:w-[42px] sm:h-[42px] inline-flex items-center justify-center bg-white/95 backdrop-blur-sm border border-[#DCDCDC] rounded-md shadow-sm text-[#595959] hover:text-[#141414] hover:border-[#141414] transition-colors cursor-pointer"
+        >
+          <ChevronsUpDown className="w-4 h-4 shrink-0" aria-hidden="true" />
+        </button>
+      </nav>
+    );
+  }
+
   return (
     <nav
       aria-label="페이지 빠른 이동"
@@ -112,6 +160,17 @@ export function ScrollNavBar({ watchKey }: ScrollNavBarProps) {
             </button>
           );
         })}
+
+        <button
+          type="button"
+          onClick={toggleMini}
+          aria-expanded={true}
+          aria-label="빠른 이동 바 접기"
+          title="미니 모드로 접기"
+          className="w-[50px] sm:w-[54px] py-1.5 px-1 inline-flex items-center justify-center bg-white/95 text-[#8A8A8A] hover:text-[#141414] hover:bg-[#FAFAFA] transition-colors cursor-pointer"
+        >
+          <ChevronDown className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+        </button>
       </div>
     </nav>
   );
