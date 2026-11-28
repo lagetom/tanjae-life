@@ -12,6 +12,7 @@ import {
   RelationshipView,
 } from './components/RelationshipView';
 import { REPORT_PAGES, type ReportPageId, ReportView } from './components/ReportView';
+import { ScrollNavBar } from './components/ScrollNavBar';
 import { TopBar } from './components/TopBar';
 import { PRESET_PROFILES } from './constants/uiMeta';
 import type {
@@ -414,6 +415,8 @@ export default function App() {
           />
         )}
       </div>
+
+      <ScrollNavBar watchKey={`${mode}:${activeReportPage}:${activeRelationPage}`} />
 
       <BokchaeModal open={bokchaeOpen} onClose={() => setBokchaeOpen(false)} />
     </div>
